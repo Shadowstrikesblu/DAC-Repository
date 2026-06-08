@@ -2,7 +2,6 @@
 
 ## Vue simple
 
-```text
 React frontend
   -> FastAPI backend
     -> detection intention
@@ -10,7 +9,6 @@ React frontend
     -> execution Terraform
     -> sauvegarde DB
     -> retour chat / inventaire
-```
 
 ## Backend actif
 

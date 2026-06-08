@@ -4,15 +4,11 @@ Ce document explique le fichier `.env` du projet DAC CodeCamp ETNA 2026.
 
 Le fichier officiel est a la racine du projet:
 
-```text
 .env
-```
 
 Il est cree a partir du modele:
 
-```bash
 cp .env.example .env
-```
 
 Le meme `.env` est utilise par Docker Compose et par le backend FastAPI, meme si le backend est lance depuis le dossier `devops_api`.
 
@@ -40,7 +36,6 @@ Deux valeurs doivent etre generees localement:
 
 Commande recommandee:
 
-```bash
 python3 - <<'PY'
 import secrets
 from cryptography.fernet import Fernet
@@ -50,7 +45,6 @@ fernet_key = Fernet.generate_key().decode()
 print("FERNET_KEY=" + fernet_key)
 print("FERNET_SECRET=" + fernet_key)
 PY
-```
 
 Copier ensuite les trois lignes dans `.env`.
 
@@ -60,25 +54,19 @@ Copier ensuite les trois lignes dans `.env`.
 
 Exemple:
 
-```bash
 DAC_ENV=development
-```
 
 Role: indique l'environnement d'execution.
 
 Pour les etudiants, garder:
 
-```bash
 DAC_ENV=development
-```
 
 ### `DAC_SCHOOL_MODE`
 
 Exemple:
 
-```bash
 DAC_SCHOOL_MODE=true
-```
 
 Role: active les garde-fous pedagogiques du CodeCamp.
 
@@ -86,33 +74,25 @@ Ce mode limite le perimetre de demonstration et evite certaines actions trop lar
 
 Pour les etudiants, garder:
 
-```bash
 DAC_SCHOOL_MODE=true
-```
 
 ### `DAC_SCHOOL_MAX_INSTANCES`
 
 Exemple:
 
-```bash
 DAC_SCHOOL_MAX_INSTANCES=1
-```
 
 Role: limite le nombre de VM creees dans le parcours ecole.
 
 Pour eviter les couts AWS, garder:
 
-```bash
 DAC_SCHOOL_MAX_INSTANCES=1
-```
 
 ### `DAC_LOG_LEVEL`
 
 Exemple:
 
-```bash
 DAC_LOG_LEVEL=debug
-```
 
 Role: niveau de logs souhaite.
 
@@ -124,61 +104,45 @@ Pour apprendre et diagnostiquer, `debug` est utile.
 
 Exemple Docker:
 
-```bash
 BACKEND_BASE_URL=http://backend:8000
-```
 
 Role: URL interne utilisee par le backend quand il doit s'appeler lui-meme dans Docker.
 
 Avec Docker, garder:
 
-```bash
 BACKEND_BASE_URL=http://backend:8000
-```
 
 En lancement manuel local, utiliser plutot:
 
-```bash
 BACKEND_BASE_URL=http://localhost:8000
-```
 
 ### `FRONTEND_BASE_URL`
 
 Exemple:
 
-```bash
 FRONTEND_BASE_URL=http://localhost:5173
-```
 
 Role: URL du frontend React.
 
 Pour les etudiants, garder:
 
-```bash
 FRONTEND_BASE_URL=http://localhost:5173
-```
 
 ### `DATABASE_URL`
 
 Exemple Docker:
 
-```bash
 DATABASE_URL=postgresql://dac:dac@postgres:5432/devops_api_db
-```
 
 Role: indique au backend comment se connecter a PostgreSQL.
 
 Avec Docker, garder:
 
-```bash
 DATABASE_URL=postgresql://dac:dac@postgres:5432/devops_api_db
-```
 
 En PostgreSQL local, adapter:
 
-```bash
 DATABASE_URL=postgresql://USER:PASSWORD@localhost:5432/devops_api_db
-```
 
 ## 5. Authentification
 
@@ -188,20 +152,11 @@ Role: cle utilisee pour signer les tokens JWT de connexion.
 
 Quand un utilisateur se connecte, le backend cree un token signe avec `SECRET_KEY`. A chaque requete protegee, le backend verifie ce token avec la meme cle.
 
-Generer:
-
-```bash
-python3 - <<'PY'
-import secrets
-print(secrets.token_urlsafe(64))
-PY
-```
+Generation: utiliser la commande de la section 2.
 
 Exemple dans `.env`:
 
-```bash
 SECRET_KEY=valeur_generee
-```
 
 Important:
 
@@ -213,33 +168,25 @@ Important:
 
 Exemple:
 
-```bash
 ALGORITHM=HS256
-```
 
 Role: algorithme utilise pour signer les tokens JWT.
 
 Pour les etudiants, garder:
 
-```bash
 ALGORITHM=HS256
-```
 
 ### `ACCESS_TOKEN_EXPIRE_MINUTES`
 
 Exemple:
 
-```bash
 ACCESS_TOKEN_EXPIRE_MINUTES=60
-```
 
 Role: duree de validite du token de connexion en minutes.
 
 Pour les etudiants, garder:
 
-```bash
 ACCESS_TOKEN_EXPIRE_MINUTES=60
-```
 
 ## 6. Chiffrement Fernet
 
@@ -254,20 +201,11 @@ Elle sert notamment pour:
 - les cles privees generees;
 - certaines informations sensibles d'instances.
 
-Generer:
-
-```bash
-python3 - <<'PY'
-from cryptography.fernet import Fernet
-print(Fernet.generate_key().decode())
-PY
-```
+Generation: utiliser la commande de la section 2.
 
 Exemple dans `.env`:
 
-```bash
 FERNET_KEY=valeur_generee
-```
 
 Important:
 
@@ -279,9 +217,7 @@ Important:
 
 Exemple:
 
-```bash
 FERNET_SECRET=meme_valeur_que_FERNET_KEY
-```
 
 Role: alias de compatibilite avec l'ancien code.
 
@@ -293,15 +229,11 @@ Dans le projet actuel, `FERNET_KEY` est la variable principale. Pour eviter tout
 
 Sans cle OpenAI:
 
-```bash
 DAC_AI_PROVIDER=mock
-```
 
 Avec OpenAI:
 
-```bash
 DAC_AI_PROVIDER=openai
-```
 
 Role: choisit le mode IA.
 
@@ -311,15 +243,11 @@ Le mode `mock` permet de lancer DAC sans cle OpenAI. Les workflows applicatifs c
 
 Sans OpenAI:
 
-```bash
 OPENAI_API_KEY=
-```
 
 Avec OpenAI:
 
-```bash
 OPENAI_API_KEY=sk-...
-```
 
 Role: cle API OpenAI utilisee par le backend pour les fonctions IA avancees.
 
@@ -333,17 +261,13 @@ Important:
 
 Exemple:
 
-```bash
 DAC_AI_MODEL=gpt-4o-mini
-```
 
 Role: modele IA utilise quand `DAC_AI_PROVIDER=openai`.
 
 Modele conseille pour les etudiants:
 
-```bash
 DAC_AI_MODEL=gpt-4o-mini
-```
 
 ## 8. Frontend Vite
 
@@ -351,37 +275,28 @@ DAC_AI_MODEL=gpt-4o-mini
 
 Exemple:
 
-```bash
 VITE_API_URL=http://localhost:8000
-```
 
 Role: URL du backend appelee par le frontend React.
 
 Pour les etudiants, garder:
 
-```bash
 VITE_API_URL=http://localhost:8000
-```
 
 ### `VITE_NODE_ENV`
 
 Exemple:
 
-```bash
 VITE_NODE_ENV=development
-```
 
 Role: indique l'environnement frontend.
 
 Pour les etudiants, garder:
 
-```bash
 VITE_NODE_ENV=development
-```
 
 ## 9. Exemple `.env` minimal pour Docker
 
-```bash
 DAC_ENV=development
 DAC_SCHOOL_MODE=true
 DAC_SCHOOL_MAX_INSTANCES=1
@@ -404,23 +319,18 @@ DAC_AI_MODEL=gpt-4o-mini
 
 VITE_API_URL=http://localhost:8000
 VITE_NODE_ENV=development
-```
 
 ## 10. Checklist avant de lancer
 
 Avant de lancer le projet, verifier:
 
-```bash
 git status
-```
 
 Le fichier `.env` ne doit pas apparaitre comme fichier a commiter.
 
 Verifier aussi:
 
-```bash
 cat .env
-```
 
 Vous devez avoir au minimum:
 
@@ -454,10 +364,8 @@ Causes possibles:
 
 Solution pour utiliser OpenAI:
 
-```bash
 DAC_AI_PROVIDER=openai
 OPENAI_API_KEY=sk-...
 DAC_AI_MODEL=gpt-4o-mini
-```
 
 Puis redemarrer le backend.

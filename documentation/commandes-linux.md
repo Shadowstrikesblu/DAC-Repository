@@ -8,124 +8,90 @@ Pour le detail des variables `.env`, voir [variables-environnement.md](variables
 
 ## 1. Aller dans le projet
 
-```bash
 cd ~/devops-as-a-chat
-```
 
 Verifier que vous etes sur la bonne branche:
 
-```bash
 git branch --show-current
 git status
-```
 
 La branche attendue est:
 
-```text
 codecamp-etna-2026
-```
 
 ## 2. Verifier les outils installes
 
-```bash
 git --version
 docker version
 docker compose version
-```
 
 Pour un lancement local sans Docker complet:
 
-```bash
 python3 --version
 node -v
 npm -v
 terraform -version
-```
 
 Versions conseillees:
 
-```text
 Docker Compose v2
 Docker API 1.44+
 Python 3.12+
 Node.js 22.12+
 Terraform 1.6+
-```
 
 ## 3. Lancement recommande avec Docker
 
 Depuis la racine du projet:
 
-```bash
 docker compose up --build
-```
 
 Ouvrir ensuite:
 
-```text
 Frontend: http://localhost:5173
 Backend:  http://localhost:8000
 Swagger:  http://localhost:8000/docs
 Health:   http://localhost:8000/health
-```
 
 ## 4. Docker en arriere-plan
 
 Lancer sans bloquer le terminal:
 
-```bash
 docker compose up --build -d
-```
 
 Voir les conteneurs:
 
-```bash
 docker compose ps
-```
 
 Voir tous les logs:
 
-```bash
 docker compose logs -f
-```
 
 Voir seulement les logs backend:
 
-```bash
 docker compose logs -f backend
-```
 
 Voir seulement les logs frontend:
 
-```bash
 docker compose logs -f frontend
-```
 
 Arreter le projet:
 
-```bash
 docker compose down
-```
 
 Arreter et supprimer aussi la base PostgreSQL Docker:
 
-```bash
 docker compose down -v
-```
 
 ## 5. Verifier la configuration Docker
 
 Avant de lancer, vous pouvez verifier que le fichier Docker Compose est valide:
 
-```bash
 docker compose config
-```
 
 Si vous voyez une erreur comme:
 
-```text
 client version 1.43 is too old. Minimum supported API version is 1.44
-```
 
 Il faut mettre Docker a jour.
 
@@ -137,13 +103,10 @@ Utiliser cette methode seulement si Docker ne peut pas lancer tout le projet.
 
 Depuis la racine du projet:
 
-```bash
 docker compose up -d postgres
-```
 
 ### Terminal 2 - Backend FastAPI
 
-```bash
 cd ~/devops-as-a-chat
 cp .env.example .env
 cd devops_api
@@ -151,40 +114,31 @@ python3 -m venv .venv
 source .venv/bin/activate
 pip install -r requirements.txt
 uvicorn app.main:app --reload --host 0.0.0.0 --port 8000
-```
 
 Verifier le backend:
 
-```bash
 curl http://localhost:8000/health
-```
 
 ### Terminal 3 - Frontend React
 
-```bash
 cd ~/devops-as-a-chat/frontend
 npm install
 npm run dev
-```
 
 Ouvrir:
 
-```text
 http://localhost:5173
-```
 
 ## 7. Si Node.js est trop ancien
 
 Si `npm run dev` affiche une erreur Vite ou `crypto.hash`, utiliser Node.js 22 avec `nvm`:
 
-```bash
 source ~/.nvm/nvm.sh
 nvm install 22
 nvm use 22
 cd ~/devops-as-a-chat/frontend
 npm install
 npm run dev
-```
 
 ## 8. Configuration AWS pour la demo
 
@@ -197,67 +151,48 @@ Dans l'interface DAC:
 
 Tester dans le chat:
 
-```text
 cree une instance EC2 Ubuntu
-```
 
 Puis:
 
-```text
 AWS Ubuntu 22.04 t3.micro eu-west-1
-```
 
 Puis confirmer:
 
-```text
 ok
-```
 
 Lister les ressources:
 
-```text
 liste des ressources
-```
 
 Supprimer une ressource:
 
-```text
 supprimer mon instance
-```
 
-## 9. Generer une cle Fernet
+## 9. Generer les secrets du `.env`
 
-DAC utilise `FERNET_KEY` pour chiffrer des donnees sensibles en base de donnees.
+Pour le detail de chaque variable, voir [variables-environnement.md](variables-environnement.md).
 
-Generer une nouvelle cle:
+Generer `SECRET_KEY`, `FERNET_KEY` et `FERNET_SECRET` en une commande:
 
-```bash
 python3 - <<'PY'
+import secrets
 from cryptography.fernet import Fernet
-print(Fernet.generate_key().decode())
+
+print("SECRET_KEY=" + secrets.token_urlsafe(64))
+fernet_key = Fernet.generate_key().decode()
+print("FERNET_KEY=" + fernet_key)
+print("FERNET_SECRET=" + fernet_key)
 PY
-```
 
-La commande retourne une valeur de ce type:
-
-```text
-yKbgOsM7Qkx6Z3crIzmaQN5AvVS1fpwKLXhLNmca_zM=
-```
-
-Copier cette valeur dans votre fichier `.env`:
-
-```bash
-FERNET_KEY=collez_la_cle_generee_ici
-FERNET_SECRET=collez_la_meme_cle_ici
-```
-
-`FERNET_SECRET` est garde comme alias de compatibilite avec l'ancien code. Dans le projet actuel, `FERNET_KEY` est la variable principale.
+Copier les valeurs generees dans `.env`.
 
 Important:
 
 - ne committez jamais votre fichier `.env`;
 - gardez la meme cle Fernet tant que vous utilisez la meme base de donnees;
-- si vous changez la cle, les anciennes donnees chiffrees ne pourront plus etre dechiffrees.
+- si vous changez `SECRET_KEY`, les utilisateurs devront se reconnecter;
+- si vous changez `FERNET_KEY`, les anciennes donnees chiffrees ne pourront plus etre dechiffrees.
 
 ## 10. Erreurs frequentes
 
@@ -265,29 +200,21 @@ Important:
 
 Voir le processus qui utilise le port:
 
-```bash
 sudo lsof -i :8000
-```
 
 Arreter proprement le processus si vous savez que c'est un ancien backend DAC:
 
-```bash
 kill <PID>
-```
 
 ### Le port 5173 est deja utilise
 
 Voir le processus:
 
-```bash
 sudo lsof -i :5173
-```
 
 Arreter proprement le processus si c'est un ancien frontend DAC:
 
-```bash
 kill <PID>
-```
 
 ### AWS refuse Terraform
 
@@ -303,36 +230,28 @@ Solution:
 
 Erreur possible:
 
-```text
 ERR FERNET_KEY non defini dans l'environnement.
-```
 
 Solution:
 
-1. Generer une cle Fernet avec la commande de la section 9.
-2. Ajouter `FERNET_KEY` et `FERNET_SECRET` dans `.env`.
+1. Generer les secrets avec la commande de la section 9.
+2. Ajouter `SECRET_KEY`, `FERNET_KEY` et `FERNET_SECRET` dans `.env`.
 3. Redemarrer le backend.
 
 ## 11. Commandes de verification pour developpeurs
 
 Verifier le backend Python:
 
-```bash
 cd ~/devops-as-a-chat/devops_api
 source .venv/bin/activate
 python3 -m compileall app
-```
 
 Verifier le frontend:
 
-```bash
 cd ~/devops-as-a-chat/frontend
 npm run build
-```
 
 Verifier Docker Compose:
 
-```bash
 cd ~/devops-as-a-chat
 docker compose config
-```
