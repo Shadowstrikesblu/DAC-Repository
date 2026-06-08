@@ -4,6 +4,8 @@ Cette fiche donne les commandes utiles pour lancer DAC pendant le CodeCamp ETNA 
 
 Objectif: un etudiant clone le projet, lance Docker, ouvre le frontend, puis teste le chat DAC.
 
+Pour le detail des variables `.env`, voir [variables-environnement.md](variables-environnement.md).
+
 ## 1. Aller dans le projet
 
 ```bash

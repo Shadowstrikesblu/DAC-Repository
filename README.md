@@ -23,6 +23,8 @@ Voir le guide complet: [documentation/installation.md](documentation/installatio
 
 Pour une fiche rapide de commandes Linux a copier-coller: [documentation/commandes-linux.md](documentation/commandes-linux.md).
 
+Pour comprendre et generer les variables `.env`: [documentation/variables-environnement.md](documentation/variables-environnement.md).
+
 Resume:
 
 - Docker et Docker Compose recents.

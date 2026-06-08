@@ -4,6 +4,8 @@ Ce guide explique tout ce qu'il faut installer pour lancer DAC en local pendant 
 
 Pour une version courte avec uniquement les commandes a copier-coller, voir [commandes-linux.md](commandes-linux.md).
 
+Pour comprendre et generer les variables `.env`, voir [variables-environnement.md](variables-environnement.md).
+
 ## 1. Ce qu'il faut installer
 
 ### Obligatoire
