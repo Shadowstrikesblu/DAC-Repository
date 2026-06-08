@@ -143,7 +143,7 @@ docker compose up -d postgres
 
 ```bash
 cd ~/devops-as-a-chat
-cp .env.example devops_api/.env
+cp .env.example .env
 cd devops_api
 python3 -m venv .venv
 source .venv/bin/activate
@@ -223,7 +223,41 @@ Supprimer une ressource:
 supprimer mon instance
 ```
 
-## 9. Erreurs frequentes
+## 9. Generer une cle Fernet
+
+DAC utilise `FERNET_KEY` pour chiffrer des donnees sensibles en base de donnees.
+
+Generer une nouvelle cle:
+
+```bash
+python3 - <<'PY'
+from cryptography.fernet import Fernet
+print(Fernet.generate_key().decode())
+PY
+```
+
+La commande retourne une valeur de ce type:
+
+```text
+yKbgOsM7Qkx6Z3crIzmaQN5AvVS1fpwKLXhLNmca_zM=
+```
+
+Copier cette valeur dans votre fichier `.env`:
+
+```bash
+FERNET_KEY=collez_la_cle_generee_ici
+FERNET_SECRET=collez_la_meme_cle_ici
+```
+
+`FERNET_SECRET` est garde comme alias de compatibilite avec l'ancien code. Dans le projet actuel, `FERNET_KEY` est la variable principale.
+
+Important:
+
+- ne committez jamais votre fichier `.env`;
+- gardez la meme cle Fernet tant que vous utilisez la meme base de donnees;
+- si vous changez la cle, les anciennes donnees chiffrees ne pourront plus etre dechiffrees.
+
+## 10. Erreurs frequentes
 
 ### Le port 8000 est deja utilise
 
@@ -263,7 +297,21 @@ Solution:
 2. Enregistrer de nouvelles cles.
 3. Relancer la demande dans le chat.
 
-## 10. Commandes de verification pour developpeurs
+### Cle Fernet invalide ou manquante
+
+Erreur possible:
+
+```text
+ERR FERNET_KEY non defini dans l'environnement.
+```
+
+Solution:
+
+1. Generer une cle Fernet avec la commande de la section 9.
+2. Ajouter `FERNET_KEY` et `FERNET_SECRET` dans `.env`.
+3. Redemarrer le backend.
+
+## 11. Commandes de verification pour developpeurs
 
 Verifier le backend Python:
 

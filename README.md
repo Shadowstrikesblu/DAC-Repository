@@ -41,6 +41,8 @@ docker compose up --build
 
 Optionnel: copier `.env.example` vers `.env` si vous voulez personnaliser les variables locales.
 
+Le fichier `.env` officiel est celui de la racine du repo. Il est utilise par Docker Compose et par le backend FastAPI, meme quand `uvicorn` est lance depuis `devops_api`.
+
 Acces:
 
 - Frontend: http://localhost:5173

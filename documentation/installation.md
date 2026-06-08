@@ -102,7 +102,7 @@ Si Docker ne marche pas, installer PostgreSQL localement et creer une base compa
 Depuis la racine du projet:
 
 ```bash
-cp .env.example devops_api/.env
+cp .env.example .env
 cd devops_api
 python3 -m venv .venv
 source .venv/bin/activate

@@ -366,11 +366,7 @@ Important:
 - `.env` peut contenir des secrets locaux;
 - ne mettez jamais de vraies cles AWS dans Git.
 
-Pour le backend local, vous pouvez aussi copier:
-
-```bash
-cp .env.example devops_api/.env
-```
+Le backend charge automatiquement ce `.env` racine, meme si vous lancez `uvicorn` depuis le dossier `devops_api`.
 
 ## 11. Parcours utilisateur DAC
 

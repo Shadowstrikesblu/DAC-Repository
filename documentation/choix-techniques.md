@@ -76,8 +76,8 @@ docker compose up -d postgres
 Backend:
 
 ```bash
+cp .env.example .env
 cd devops_api
-cp ../.env.example .env
 python3 -m venv .venv
 source .venv/bin/activate
 pip install -r requirements.txt

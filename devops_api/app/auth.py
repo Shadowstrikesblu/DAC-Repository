@@ -7,15 +7,15 @@ from passlib.context import CryptContext
 from passlib.exc import InvalidHashError, UnknownHashError
 from jose import JWTError, jwt
 from datetime import datetime, timedelta
-from dotenv import load_dotenv
 from fastapi import Depends, HTTPException, status
 from fastapi.security import OAuth2PasswordBearer
 from sqlalchemy.orm import Session
+from app.env import load_app_env
 from app import database, models
 import os
 
 # Charger les variables d'environnement
-load_dotenv()
+load_app_env()
 
 # Récupérer les variables de configuration
 SECRET_KEY = os.getenv("SECRET_KEY")

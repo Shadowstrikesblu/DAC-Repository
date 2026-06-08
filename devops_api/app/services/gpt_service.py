@@ -11,11 +11,11 @@ import threading
 from typing import Optional, Dict, Any
 from concurrent.futures import ThreadPoolExecutor, TimeoutError as FuturesTimeoutError
 
-from dotenv import load_dotenv
 from openai import OpenAI, APIConnectionError, RateLimitError, BadRequestError
+from app.env import load_app_env
 
 logger = logging.getLogger(__name__)
-load_dotenv()
+load_app_env()
 
 OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
 AI_PROVIDER = (os.getenv("DAC_AI_PROVIDER") or ("openai" if OPENAI_API_KEY else "mock")).lower()

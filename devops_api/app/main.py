@@ -6,9 +6,9 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 import os
 import logging
-from dotenv import load_dotenv
 import threading
 
+from app.env import load_app_env
 from app.settings import settings
 from app.database import engine
 from app.paths import ensure_dirs            # OK crée /data/generated_files + sous-dossiers
@@ -19,7 +19,7 @@ from app.security.rate_limit import setup_rate_limiting  # OK P0.2 rate limiting
 # 
 # Env & logs
 # 
-load_dotenv()
+load_app_env()
 
 # Configure logging avec fichier centralisé dans generated_files
 from pathlib import Path

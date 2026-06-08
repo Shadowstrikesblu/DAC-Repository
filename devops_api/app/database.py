@@ -1,9 +1,9 @@
 import os
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker, declarative_base
-from dotenv import load_dotenv
+from app.env import load_app_env
 
-load_dotenv()  # Charge les variables du .env
+load_app_env()
 
 DATABASE_URL = os.getenv("DATABASE_URL")
 

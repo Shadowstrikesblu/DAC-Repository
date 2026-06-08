@@ -3,8 +3,11 @@
 from cryptography.fernet import Fernet
 import os
 import json
+from app.env import load_app_env
 
-FERNET_KEY = os.getenv("FERNET_KEY")
+load_app_env()
+
+FERNET_KEY = os.getenv("FERNET_KEY") or os.getenv("FERNET_SECRET")
 
 if not FERNET_KEY:
     raise RuntimeError("ERR FERNET_KEY non défini dans l'environnement.")
