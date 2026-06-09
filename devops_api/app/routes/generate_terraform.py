@@ -1284,7 +1284,7 @@ async def generate_terraform(
             "aws": (
                 f"- Ressource: aws_instance\n"
                 f"- AMI: ami-xxxxxxxx\n"
-                f"- instance_type: t2.micro\n"
+                f"- instance_type: t3.micro\n"
                 f"- count: {instance_count or 1}\n"
                 f"- associate_public_ip_address = true\n"
                 f"- Tags: Name = \"{name_prefix}_instance\"\n"
@@ -1636,6 +1636,40 @@ resource "aws_key_pair" "generated_key" {{
             inject_instance_attributes,
             terraform_code,
         )
+
+        # Résolution du placeholder AMI 'ami-xxxxxxxx' via un data source aws_ami.
+        # L'AMI réelle est résolue au moment du `plan`/`apply` (ec2:DescribeImages),
+        # ce qui garantit une AMI valide et à jour pour la région courante,
+        # sans dépendre d'un mapping statique qui se périme.
+        if "ami-xxxxxxxx" in terraform_code:
+            ami_lookup = {
+                "ubuntu":       (["099720109477"], "ubuntu/images/hvm-ssd/ubuntu-jammy-22.04-amd64-server-*"),
+                "debian":       (["136693071363"], "debian-12-amd64-*"),
+                "amazon-linux": (["137112412989"], "amzn2-ami-hvm-*-x86_64-gp2"),
+                "windows":      (["801119661308"], "Windows_Server-2022-English-Full-Base-*"),
+            }
+            owners, name_filter = ami_lookup.get(distro, ami_lookup["ubuntu"])
+            owners_hcl = ", ".join(f'"{o}"' for o in owners)
+            if 'data "aws_ami" "dac_default"' not in terraform_code:
+                terraform_code += (
+                    '\n\ndata "aws_ami" "dac_default" {\n'
+                    '  most_recent = true\n'
+                    f'  owners      = [{owners_hcl}]\n'
+                    '  filter {\n'
+                    '    name   = "name"\n'
+                    f'    values = ["{name_filter}"]\n'
+                    '  }\n'
+                    '  filter {\n'
+                    '    name   = "virtualization-type"\n'
+                    '    values = ["hvm"]\n'
+                    '  }\n'
+                    '}\n'
+                )
+            terraform_code = terraform_code.replace('"ami-xxxxxxxx"', 'data.aws_ami.dac_default.id')
+
+        # t2.micro n'est pas éligible Free Tier dans plusieurs régions (ex: eu-west-1).
+        # t3.micro l'est : on force ce type pour éviter InvalidParameterCombination.
+        terraform_code = terraform_code.replace('"t2.micro"', '"t3.micro"')
 
         # Injection des outputs (AWS)
         terraform_code = _ensure_outputs_aws(terraform_code)
