@@ -323,7 +323,11 @@ async def run_terraform(
         logs["apply"] = apply_output
 
         if apply_result.returncode != 0:
-            raise Exception(f"Erreur 'apply': {apply_output}")
+            # La vraie cause Terraform/AWS (ligne 'Error:') est sur stderr.
+            # On le privilégie pour ne plus afficher un message tronqué au plan.
+            apply_err = (getattr(apply_result, "stderr", "") or "").strip()
+            detail = apply_err or apply_output
+            raise Exception(f"Erreur 'apply': {detail}")
 
         report_progress("terraform_apply_complete",
                         f" Infrastructure déployée ({resources_created} ressources)", 90.0)

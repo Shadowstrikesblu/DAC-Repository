@@ -226,12 +226,14 @@ async def execute_infrastructure_creation(
                 bg_session.state = "awaiting_intent"
                 bg_session.session_temp_data = None
             if bg_chat:
+                from app.services.error_translator import format_user_error
+                friendly = format_user_error(str(e), title="Création Terraform échouée")
                 db.add(models.Message(
                     session_id=session_id,
                     chat_id=bg_chat.id,
                     sender="bot",
-                    text=f"Erreur création Terraform: {str(e)[:300]}\nTu peux corriger la demande puis relancer.",
-                    extra={"state": "awaiting_intent", "error": str(e)[:500]},
+                    text=friendly,
+                    extra={"state": "awaiting_intent", "type": "error", "error": str(e)[:1000]},
                 ))
             db.commit()
         except Exception as notify_error:
@@ -2532,10 +2534,33 @@ async def chat_message(
         session.state = "executing"
         session.session_temp_data = json.dumps({"task_id": task_id, "intent_id": intent.id})
         db.commit()
+
+        # Axe 3 — récapitulatif structuré du plan avant/au lancement de l'exécution.
+        try:
+            from app.services.plan_builder import _extract_create_specs
+            specs = _extract_create_specs(intent.prompt or "") or {}
+            vms = specs.get("vms") or []
+            provider_name = (specs.get("provider") or "aws").upper()
+            os_list = ", ".join(sorted({(v.get("os") or "ubuntu") for v in vms})) if vms else "ubuntu"
+            total = sum(int(v.get("count") or 1) for v in vms) if vms else 1
+            region = (aws_creds.get("region") if isinstance(aws_creds, dict) else None) or "eu-west-1"
+            plan_md = (
+                f"**Plan de déploiement ({provider_name})**\n\n"
+                f"| Ressource | Détail |\n|---|---|\n"
+                f"| Instance EC2 | t3.micro × {total} |\n"
+                f"| OS | {os_list} |\n"
+                f"| Région | {region} |\n"
+                f"| Réseau | VPC par défaut |\n"
+                f"| Sécurité | Security group SSH (port 22) + key pair |\n\n"
+                f"🚀 Création lancée en arrière-plan…"
+            )
+        except Exception:
+            plan_md = "🚀 Création Terraform lancée en arrière-plan."
+
         return send_bot_message(
-            "Création Terraform lancée en arrière-plan.",
+            plan_md,
             "executing",
-            {"task_id": task_id, "intent_id": intent.id},
+            {"task_id": task_id, "intent_id": intent.id, "type": "execution"},
         )
 
     if session.state == "awaiting_intent":

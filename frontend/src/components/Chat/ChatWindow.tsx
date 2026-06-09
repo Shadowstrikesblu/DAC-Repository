@@ -392,11 +392,17 @@ export default function ChatWindow({
               const isConsecutive =
                 idx > 0 && sortedMessages[idx - 1].sender === msg.sender;
 
-              // Détecter les task_id dans les messages du bot
+              // Détecter les task_id dans les messages du bot :
+              // 1) dans le texte (`ID de tâche: ...`), 2) dans extra.task_id (création Terraform).
               const taskIdMatch =
                 msg.sender !== "user" &&
                 msg.text.match(/ID de tâche: `([a-f0-9\-]{36})`/);
-              const taskId = taskIdMatch ? taskIdMatch[1] : null;
+              const taskId =
+                msg.sender !== "user"
+                  ? taskIdMatch
+                    ? taskIdMatch[1]
+                    : msg.extra?.task_id || null
+                  : null;
 
               return (
                 <Fade in key={idx} timeout={300 + idx * 50}>
