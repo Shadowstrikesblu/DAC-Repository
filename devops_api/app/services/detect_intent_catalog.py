@@ -10,6 +10,7 @@ import re
 from typing import Optional
 from app.schemas.intent_schema import DetectedIntent
 from app.services.config_catalog import match_config_action, get_action_by_id
+from app.services.intent_detector import SimpleIntentDetector
 
 logger = logging.getLogger(__name__)
 
@@ -76,9 +77,25 @@ def detect_intent_with_catalog(text: str, last_action_id: Optional[str] = None) 
         
         return intent
     
-    # Par défaut: free_chat
+  # Tentative de détection générique (VM sans mot-clé de création explicite)
+    detector = SimpleIntentDetector()
+    os_result = detector.detect_os_creation(text)
+
+    if os_result["detected"]:
+        return DetectedIntent(
+            intent_type="create",
+            confidence=0.6,
+            recognized_keywords=["vm", os_result["os"]],
+            params={"os": os_result["os"], "source": "generic_detection"},
+        )
+
+# Vraiment inconnu → free_chat avec message d'aide
     return DetectedIntent(
         intent_type="free_chat",
         confidence=0.0,
         recognized_keywords=[],
-    )
+        debug={
+            "reason": "aucune_intention_reconnue",
+            "suggestion": "Essaie : 'créer une instance ubuntu' ou 'installer nginx'"
+        }
+        )

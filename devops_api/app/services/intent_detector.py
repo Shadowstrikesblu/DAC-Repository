@@ -33,6 +33,27 @@ class SimpleIntentDetector:
         # Avec des mots clés de déploiement
         r'(?:veux|voudrai[st]?|souhaite|besoin)\s+.*ubuntu',
     ]
+    # Patterns pour les autres OS
+    DEBIAN_CREATION_PATTERNS = [
+    r'(?:créer?|creer|faire|lance[rz]?|déploy|provision)\s+.*debian',
+    r'(?:une?|des?)\s+(?:instance|vm|machine|serveur)\s+.*debian',
+    r'(?:instance|vm|machine|serveur)\s+debian',
+    r'(?:veux|voudrai[st]?|souhaite|besoin)\s+.*debian',
+    ]
+
+    WINDOWS_CREATION_PATTERNS = [
+    r'(?:créer?|creer|faire|lance[rz]?|déploy|provision)\s+.*windows',
+    r'(?:une?|des?)\s+(?:instance|vm|machine|serveur)\s+.*windows',
+    r'(?:instance|vm|machine|serveur)\s+windows',
+    ]
+
+    GENERIC_CREATION_PATTERNS = [
+    r'(?:créer?|creer|faire|lance[rz]?|déploy|provision)\s+.*(?:instance|vm|machine|serveur|vps)',
+    r'(?:une?|des?)\s+(?:nouvelle?|nouveau)\s+(?:instance|vm|machine|serveur|vps)',
+    r'(?:veux|voudrai[st]?|souhaite|besoin)\s+.*(?:instance|vm|machine|serveur|vps)',
+    r'(?:monte|monter|héberger|héberge)\s+.*(?:instance|vm|machine|serveur)',
+    ]
+
     
     # Patterns pour extraire les providers
     PROVIDER_PATTERNS = {
@@ -89,6 +110,35 @@ class SimpleIntentDetector:
             return True
             
         return False
+        
+    def detect_os_creation(self, text: str) -> dict:
+        """
+        Détecte la création de n'importe quel OS.
+        Retourne {"detected": True, "os": "debian"} ou {"detected": False}
+        """
+        text_clean = text.lower().strip()
+
+        # Vérifier chaque OS
+        os_patterns = {
+            "ubuntu": self.UBUNTU_CREATION_PATTERNS,
+            "debian": self.DEBIAN_CREATION_PATTERNS,
+            "windows": self.WINDOWS_CREATION_PATTERNS,
+        }
+
+        for os_name, patterns in os_patterns.items():
+            if os_name in text_clean:
+                for pattern in patterns:
+                    if re.search(pattern, text_clean, re.IGNORECASE):
+                        logger.info(f"OS creation detected: {os_name}")
+                        return {"detected": True, "os": os_name}
+
+        # Détection générique (sans OS précis)
+        for pattern in self.GENERIC_CREATION_PATTERNS:
+            if re.search(pattern, text_clean, re.IGNORECASE):
+                logger.info("Generic VM creation detected")
+                return {"detected": True, "os": "ubuntu"}  # défaut ubuntu
+
+        return {"detected": False, "os": None}
     
     def extract_ubuntu_params(self, text: str) -> Dict:
         """
