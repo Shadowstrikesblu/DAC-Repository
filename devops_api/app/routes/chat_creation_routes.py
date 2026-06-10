@@ -1266,11 +1266,17 @@ async def chat_message(
         else:
             # On change de flow immédiatement
             _reset_to_awaiting_intent_for_new_flow(detected_primary)
-            # message UX clair (pas obligatoire mais recommandé)
+            # Message court et SPÉCIFIQUE au workflow (pas le menu d'aide complet,
+            # pour ne pas être confondu avec la commande `aide`).
+            _flow_hint = {
+                "create": "🚀 Décris l'infrastructure à créer — ex. _« crée une instance ubuntu sur aws »_.",
+                "configure": "⚙️ Indique le service à installer/configurer — ex. _« installe nginx »_.",
+                "audit": "🛡️ Indique les VM à auditer — ex. _« audit de sécurité de mon instance »_.",
+                "monitoring": "📊 Indique les VM à monitorer — ex. _« monitoring de mes instances »_.",
+            }.get(detected_primary, "Décris ta demande en une phrase.")
             return send_bot_message(
-                f"Changement de demande détecté: **{detected_primary}**.\n"
-                "Je repars sur ce workflow.\n\n"
-                + DAC_HELP_MESSAGE,
+                f"Changement de demande détecté : **{detected_primary}**. Je repars sur ce workflow.\n\n"
+                f"{_flow_hint}",
                 "awaiting_intent",
                 {"forced_intent": detected_primary}
             )
