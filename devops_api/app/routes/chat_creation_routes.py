@@ -2814,7 +2814,9 @@ async def chat_message(
         # Routage selon le type d'intent détecté
         if detected_intent.intent_type == "create":
             return send_bot_message(
-                "Intent create détectée. Donne une phrase complète: AWS, Ubuntu 22.04, t3.micro, eu-north-1, nginx.",
+                "🚀 **Création d'infrastructure** — décris ce que tu veux en une phrase.\n\n"
+                "Ex. _« crée une instance ubuntu sur aws »_.\n"
+                "Tu peux préciser : OS (ubuntu/debian), type (t3.micro), région (eu-west-1).",
                 "awaiting_create_params"
             )
         
