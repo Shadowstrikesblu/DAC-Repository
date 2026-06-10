@@ -112,33 +112,33 @@ class SimpleIntentDetector:
         return False
         
     def detect_os_creation(self, text: str) -> dict:
-    """
-    Détecte la création de n'importe quel OS.
-    Retourne {"detected": True, "os": "debian"} ou {"detected": False}
-    """
-    text_clean = text.lower().strip()
+        """
+        Détecte la création de n'importe quel OS.
+        Retourne {"detected": True, "os": "debian"} ou {"detected": False}
+        """
+        text_clean = text.lower().strip()
 
-    # Vérifier chaque OS
-    os_patterns = {
-        "ubuntu": self.UBUNTU_CREATION_PATTERNS,
-        "debian": self.DEBIAN_CREATION_PATTERNS,
-        "windows": self.WINDOWS_CREATION_PATTERNS,
-    }
+        # Vérifier chaque OS
+        os_patterns = {
+            "ubuntu": self.UBUNTU_CREATION_PATTERNS,
+            "debian": self.DEBIAN_CREATION_PATTERNS,
+            "windows": self.WINDOWS_CREATION_PATTERNS,
+        }
 
-    for os_name, patterns in os_patterns.items():
-        if os_name in text_clean:
-            for pattern in patterns:
-                if re.search(pattern, text_clean, re.IGNORECASE):
-                    logger.info(f"OS creation detected: {os_name}")
-                    return {"detected": True, "os": os_name}
+        for os_name, patterns in os_patterns.items():
+            if os_name in text_clean:
+                for pattern in patterns:
+                    if re.search(pattern, text_clean, re.IGNORECASE):
+                        logger.info(f"OS creation detected: {os_name}")
+                        return {"detected": True, "os": os_name}
 
-    # Détection générique (sans OS précis)
-    for pattern in self.GENERIC_CREATION_PATTERNS:
-        if re.search(pattern, text_clean, re.IGNORECASE):
-            logger.info("Generic VM creation detected")
-            return {"detected": True, "os": "ubuntu"}  # défaut ubuntu
+        # Détection générique (sans OS précis)
+        for pattern in self.GENERIC_CREATION_PATTERNS:
+            if re.search(pattern, text_clean, re.IGNORECASE):
+                logger.info("Generic VM creation detected")
+                return {"detected": True, "os": "ubuntu"}  # défaut ubuntu
 
-    return {"detected": False, "os": None}
+        return {"detected": False, "os": None}
     
     def extract_ubuntu_params(self, text: str) -> Dict:
         """
