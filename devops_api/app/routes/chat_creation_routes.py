@@ -78,8 +78,12 @@ DAC_HELP_MESSAGE = (
     "- `vpc status` — diagnostic VPC / endpoints\n"
     "- `liste des ressources` — inventaire et synchronisation AWS\n"
     "- `supprimer` — mode suppression de ressources\n\n"
+    "### 🔍 Simuler une commande (dry-run)\n"
+    "Voir ce qui *serait* exécuté, **sans rien lancer** sur tes VM.\n"
+    "- _« simuler sudo systemctl restart nginx »_\n\n"
     "### ⌨️ Commandes rapides\n"
     "- `aide` / `help` / `menu` — afficher ce menu\n"
+    "- `simuler <commande>` — mode simulation (dry-run)\n"
     "- `annuler` — revenir au menu / arrêter l'étape en cours\n\n"
     "> 🔒 Les actions sensibles (création, configuration, suppression) demandent toujours une "
     "**confirmation** avant d'être exécutées."
@@ -1317,6 +1321,54 @@ async def chat_message(
     # (On conserve l'état courant pour ne pas casser un flux en cours.)
     if fast_command == "SHOW_MENU":
         return send_bot_message(DAC_HELP_MESSAGE, session.state or "awaiting_intent")
+
+    # Challenge 2, Piste 2 — MODE SIMULATION (dry-run) : "simuler <commande>".
+    # Exécute un dry-run réel (aucune commande n'est lancée sur les VM) et affiche
+    # ce qui SERAIT exécuté. Disponible dans n'importe quel état, sans GPT.
+    _sim_match = re.match(r'^\s*(?:simuler|simule|simulate|dry[-\s]?run)\s+(.+)$', text or "", flags=re.IGNORECASE | re.DOTALL)
+    if _sim_match:
+        sim_cmd = _sim_match.group(1).strip()
+        from app.services.plan_presenter import format_action_plan
+        from app.services.configure_only import get_available_instances_for_user
+
+        creds = get_user_aws_credentials(user.id, db)
+        region = (creds or {}).get("region") or "eu-west-1"
+        simulated_output = None
+        targets = "aucune instance détectée"
+
+        if creds:
+            try:
+                available = get_available_instances_for_user(db, user.id)
+                instance_ids = [i["instance_id"] for i in available]
+                if instance_ids:
+                    targets = ", ".join(instance_ids)
+                    from app.services.ssm_executor import SSMExecutor
+                    executor = SSMExecutor(
+                        creds.get("AWS_ACCESS_KEY_ID"),
+                        creds.get("AWS_SECRET_ACCESS_KEY"),
+                        region,
+                    )
+                    results = executor.execute_command(instance_ids, sim_cmd, dry_run=True)
+                    simulated_output = "\n".join(
+                        f"{iid}: {(r.get('stdout_tail') or r.get('stdout') or '').strip()}"
+                        for iid, r in results.items()
+                    )
+            except Exception as e:
+                simulated_output = f"(simulation locale — SSM indisponible: {str(e)[:100]})"
+
+        plan_md = format_action_plan(
+            action="exécution de commande (SIMULATION dry-run)",
+            command=sim_cmd,
+            target=targets,
+            environment=region,
+            simulated_output=simulated_output,
+            ask_confirmation=False,
+        )
+        plan_md = (
+            "🔍 **Mode simulation (dry-run)** — aucune commande n'a été exécutée sur tes VM.\n\n"
+            + plan_md
+        )
+        return send_bot_message(plan_md, session.state or "awaiting_intent", {"type": "proposal", "mode": "dry_run"})
 
     # 1) Fast command ENTER_DAC (button)
     if fast_command == "ENTER_DAC":

@@ -21,6 +21,7 @@ def format_action_plan(
     target: Optional[str] = None,
     environment: Optional[str] = None,
     simulated_output: Optional[str] = None,
+    ask_confirmation: bool = True,
 ) -> str:
     """
     Construit le message markdown de plan d'action (type `proposal`).
@@ -55,7 +56,10 @@ def format_action_plan(
         lines.append(f"```\n{simulated_output}\n```")
 
     lines.append("")
-    lines.append("⚠️ **Cette action n'a pas encore été exécutée.**")
-    lines.append("Voulez-vous confirmer ? Répondez **oui** pour exécuter, **non** pour annuler.")
+    if ask_confirmation:
+        lines.append("⚠️ **Cette action n'a pas encore été exécutée.**")
+        lines.append("Voulez-vous confirmer ? Répondez **oui** pour exécuter, **non** pour annuler.")
+    else:
+        lines.append("ℹ️ **Simulation uniquement — aucune commande n'a été exécutée.**")
 
     return "\n".join(lines)
