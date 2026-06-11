@@ -56,6 +56,9 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
   const login = (newToken: string) => {
     localStorage.setItem("access_token", newToken);
+    // Marque l'instant de connexion : à la reconnexion, le chat n'affiche que les
+    // messages postérieurs (donc vide), l'historique étant révélé au scroll vers le haut.
+    localStorage.setItem("dac_login_at", new Date().toISOString());
     setToken(newToken);
   };
 

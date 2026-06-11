@@ -65,6 +65,9 @@ export default function ChatWindow({
 }: Props) {
   const { chatMode } = useChatMode(); // Récupérer le mode
   const [messages, setMessages] = useState<Message[]>([]);
+  // Historique masqué au login : on n'affiche par défaut que les messages postérieurs
+  // à la connexion. `revealOlder` passe à true au scroll vers le haut / clic sur la bannière.
+  const [revealOlder, setRevealOlder] = useState(false);
   const [loadingState, setLoadingState] = useState<LoadingState>("idle");
   const [errorType, setErrorType] = useState<ErrorType>(null);
   const [errorMessage, setErrorMessage] = useState<string>("");
@@ -156,6 +159,7 @@ export default function ChatWindow({
     setLoadingState("loading");
     setErrorType(null);
     setErrorMessage("");
+    setRevealOlder(false); // à l'ouverture d'un chat, l'historique reste masqué
 
     if (!chatId) return;
     try {
@@ -288,6 +292,23 @@ export default function ChatWindow({
 
       <Box
         ref={scrollContainerRef}
+        onScroll={() => {
+          // Révéler l'historique masqué quand on scrolle vers le haut.
+          const el = scrollContainerRef.current;
+          if (!el || revealOlder) return;
+          // On ne déclenche que sur un vrai scroll vers le haut (contenu scrollable réel),
+          // pour éviter un déclenchement au scroll-to-bottom automatique sur vue vide.
+          const hasScrollableContent = el.scrollHeight > el.clientHeight + 50;
+          if (hasScrollableContent && el.scrollTop <= 24) {
+            const cutoffStr = localStorage.getItem("dac_login_at");
+            const cutoff = cutoffStr ? new Date(cutoffStr).getTime() : 0;
+            const hasOlder = messages.some(
+              (m) =>
+                (m.timestamp ? new Date(m.timestamp).getTime() : 0) < cutoff,
+            );
+            if (hasOlder) setRevealOlder(true);
+          }
+        }}
         sx={{
           flex: 1,
           minHeight: 0, //  NEW
@@ -387,11 +408,47 @@ export default function ChatWindow({
         )}
 
         {/* Success state - Messages */}
-        {loadingState === "success" && (
+        {loadingState === "success" && (() => {
+          const sortedAll = sortMessagesByDate(messages);
+          // Masquage de l'historique au login : on n'affiche que les messages postérieurs
+          // à la connexion, sauf si l'utilisateur a demandé à voir l'historique.
+          const cutoffStr = localStorage.getItem("dac_login_at");
+          const cutoff = cutoffStr ? new Date(cutoffStr).getTime() : 0;
+          const display = revealOlder
+            ? sortedAll
+            : sortedAll.filter((m) => {
+                const t = m.timestamp ? new Date(m.timestamp).getTime() : 0;
+                return t >= cutoff;
+              });
+          const hiddenCount = sortedAll.length - display.length;
+          return (
           <>
-            {sortMessagesByDate(messages).map((msg, idx) => {
-              // Use sorted messages for comparison too
-              const sortedMessages = sortMessagesByDate(messages);
+            {hiddenCount > 0 && (
+              <Box
+                onClick={() => setRevealOlder(true)}
+                sx={{
+                  alignSelf: "center",
+                  cursor: "pointer",
+                  px: 2,
+                  py: 0.8,
+                  mb: 2,
+                  borderRadius: 999,
+                  fontSize: "0.8rem",
+                  color: "text.secondary",
+                  bgcolor: alpha(theme.palette.secondary.main, 0.08),
+                  border: `1px solid ${alpha(theme.palette.secondary.main, 0.2)}`,
+                  "&:hover": {
+                    bgcolor: alpha(theme.palette.secondary.main, 0.16),
+                  },
+                }}
+              >
+                ⬆ Afficher les {hiddenCount} message
+                {hiddenCount > 1 ? "s" : ""} précédent
+                {hiddenCount > 1 ? "s" : ""}
+              </Box>
+            )}
+            {display.map((msg, idx) => {
+              const sortedMessages = display;
               const isConsecutive =
                 idx > 0 && sortedMessages[idx - 1].sender === msg.sender;
 
@@ -539,7 +596,8 @@ export default function ChatWindow({
               </Fade>
             )}
           </>
-        )}
+          );
+        })()}
 
         {/* Typing indicator même quand pas de messages (empty state + typing) */}
         {loadingState === "empty" && isTyping && (
