@@ -1,11 +1,12 @@
 // src/components/TaskProgress.tsx
+// CHALLENGE 5 — Affichage progressif des étapes avec niveaux de log colorés
 
 import React from 'react';
-import { 
-  Box, 
-  LinearProgress, 
-  Typography, 
-  Card, 
+import {
+  Box,
+  LinearProgress,
+  Typography,
+  Card,
   CardContent,
   List,
   ListItem,
@@ -20,19 +21,22 @@ import {
   StepLabel,
   Skeleton,
   Fade,
-  Grow
+  Grow,
+  Tooltip,    // CHALLENGE 5 — tooltip sur les étapes
 } from '@mui/material';
-import { 
+import {
   CheckCircle as CheckCircleIcon,
   Error as ErrorIcon,
   Pending as PendingIcon,
   PlayArrow as PlayArrowIcon,
   ExpandLess as ExpandLessIcon,
   Refresh as RefreshIcon,
-  Circle as CircleIcon
+  Circle as CircleIcon,
+  Warning as WarningIcon,   // CHALLENGE 5 — icône warning
+  Info as InfoIcon,          // CHALLENGE 5 — icône info
 } from '@mui/icons-material';
 import { useTaskPolling, type TaskLog } from '../hooks/useTaskPolling';
-import { 
+import {
   AWS_DEPLOYMENT_STEPS,
   getCurrentStep,
   getCurrentStepIndex,
@@ -48,6 +52,39 @@ interface TaskProgressProps {
   compact?: boolean;
 }
 
+// CHALLENGE 5 — Configuration des niveaux de log (couleurs + icônes + libellés)
+const LOG_LEVEL_CONFIG: Record<string, {
+  color: string;
+  bgColor: string;
+  label: string;
+  icon: React.ReactNode;
+}> = {
+  error: {
+    color: '#d32f2f',
+    bgColor: '#ffebee',
+    label: 'ERREUR',
+    icon: <ErrorIcon sx={{ fontSize: 14 }} />,
+  },
+  warning: {
+    color: '#e65100',
+    bgColor: '#fff3e0',
+    label: 'AVERT.',
+    icon: <WarningIcon sx={{ fontSize: 14 }} />,
+  },
+  success: {
+    color: '#2e7d32',
+    bgColor: '#e8f5e9',
+    label: 'OK',
+    icon: <CheckCircleIcon sx={{ fontSize: 14 }} />,
+  },
+  info: {
+    color: '#1565c0',
+    bgColor: '#e3f2fd',
+    label: 'INFO',
+    icon: <InfoIcon sx={{ fontSize: 14 }} />,
+  },
+};
+
 const TaskProgress: React.FC<TaskProgressProps> = ({
   taskId,
   onComplete,
@@ -55,8 +92,10 @@ const TaskProgress: React.FC<TaskProgressProps> = ({
   showLogs = true,
   compact = false
 }) => {
-  const [showDetailedLogs, setShowDetailedLogs] = React.useState(true); // Logs visibles par défaut
-  
+  const [showDetailedLogs, setShowDetailedLogs] = React.useState(true);
+  // CHALLENGE 5 — ref pour auto-scroll vers le dernier log
+  const logsEndRef = React.useRef<HTMLDivElement>(null);
+
   const {
     taskStatus,
     timeoutReached,
@@ -64,7 +103,6 @@ const TaskProgress: React.FC<TaskProgressProps> = ({
     currentStep,
     logs,
     refreshStatus,
-    // Nouveaux états pour l'amélioration UX
     connectionState
   } = useTaskPolling(taskId, {
     onComplete,
@@ -74,40 +112,34 @@ const TaskProgress: React.FC<TaskProgressProps> = ({
     }
   });
 
+  // CHALLENGE 5 — auto-scroll vers le dernier log à chaque nouveau log
+  React.useEffect(() => {
+    if (showDetailedLogs && logsEndRef.current) {
+      logsEndRef.current.scrollIntoView({ behavior: 'smooth' });
+    }
+  }, [logs.length, showDetailedLogs]);
 
   // Fonction pour obtenir l'icône selon le statut global
   const getStatusIcon = (status: string) => {
     switch (status) {
-      case 'pending':
-        return <PendingIcon color="warning" />;
-      case 'running':
-        return <PlayArrowIcon color="primary" />;
-      case 'completed':
-        return <CheckCircleIcon color="success" />;
-      case 'failed':
-        return <ErrorIcon color="error" />;
-      case 'cancelled':
-        return <ErrorIcon color="disabled" />;
-      default:
-        return <PendingIcon />;
+      case 'pending':   return <PendingIcon color="warning" />;
+      case 'running':   return <PlayArrowIcon color="primary" />;
+      case 'completed': return <CheckCircleIcon color="success" />;
+      case 'failed':    return <ErrorIcon color="error" />;
+      case 'cancelled': return <ErrorIcon color="disabled" />;
+      default:          return <PendingIcon />;
     }
   };
 
   // Fonction pour obtenir la couleur selon le statut
   const getStatusColor = (status: string) => {
     switch (status) {
-      case 'pending':
-        return 'warning';
-      case 'running':
-        return 'primary';
-      case 'completed':
-        return 'success';
-      case 'failed':
-        return 'error';
-      case 'cancelled':
-        return 'default';
-      default:
-        return 'default';
+      case 'pending':   return 'warning';
+      case 'running':   return 'primary';
+      case 'completed': return 'success';
+      case 'failed':    return 'error';
+      case 'cancelled': return 'default';
+      default:          return 'default';
     }
   };
 
@@ -116,40 +148,35 @@ const TaskProgress: React.FC<TaskProgressProps> = ({
     return new Date(timestamp).toLocaleTimeString('fr-FR');
   };
 
-  // Fonction pour obtenir la couleur du log selon le niveau
-  const getLogColor = (level: string) => {
-    switch (level) {
-      case 'error':
-        return '#f44336';
-      case 'warning':
-        return '#ff9800';
-      case 'success':
-        return '#4caf50';
-      default:
-        return '#2196f3';
-    }
-  };
+  // CHALLENGE 5 — Remplace getLogColor() par LOG_LEVEL_CONFIG pour cohérence
+  const getLevelConfig = (level: string) =>
+    LOG_LEVEL_CONFIG[level] ?? LOG_LEVEL_CONFIG['info'];
+
+  // CHALLENGE 5 — Comptage des logs par niveau (résumé rapide)
+  const logCounts = React.useMemo(() => {
+    return logs.reduce<Record<string, number>>((acc, log) => {
+      const lvl = log.level || 'info';
+      acc[lvl] = (acc[lvl] ?? 0) + 1;
+      return acc;
+    }, {});
+  }, [logs]);
 
   // Composant pour l'état de chargement initial uniquement
-  const LoadingState = () => {
-    // Simple skeleton loading - pas d'indicateurs de connexion
-    return (
-      <Card variant="outlined" sx={{ mb: 2 }}>
-        <CardContent>
-          <Box display="flex" alignItems="center" gap={2} mb={2}>
-            <Skeleton variant="circular" width={40} height={40} />
-            <Box flex={1}>
-              <Skeleton variant="text" width="60%" height={28} />
-              <Skeleton variant="text" width="40%" height={20} />
-            </Box>
+  const LoadingState = () => (
+    <Card variant="outlined" sx={{ mb: 2 }}>
+      <CardContent>
+        <Box display="flex" alignItems="center" gap={2} mb={2}>
+          <Skeleton variant="circular" width={40} height={40} />
+          <Box flex={1}>
+            <Skeleton variant="text" width="60%" height={28} />
+            <Skeleton variant="text" width="40%" height={20} />
           </Box>
-          <Skeleton variant="rectangular" height={8} sx={{ borderRadius: 1 }} />
-        </CardContent>
-      </Card>
-    );
-  };
+        </Box>
+        <Skeleton variant="rectangular" height={8} sx={{ borderRadius: 1 }} />
+      </CardContent>
+    </Card>
+  );
 
-  // Show loading state only on very first load
   if (!taskStatus) {
     return <LoadingState />;
   }
@@ -160,9 +187,9 @@ const TaskProgress: React.FC<TaskProgressProps> = ({
         {getStatusIcon(taskStatus.status || '')}
         <Box flex={1}>
           <Typography variant="body2">{currentStep}</Typography>
-          <LinearProgress 
-            variant="determinate" 
-            value={progressPercentage} 
+          <LinearProgress
+            variant="determinate"
+            value={progressPercentage}
             color={getStatusColor(taskStatus.status || '') as any}
             sx={{ mt: 0.5 }}
           />
@@ -175,30 +202,21 @@ const TaskProgress: React.FC<TaskProgressProps> = ({
   }
 
   return (
-    <Card 
-      variant="outlined" 
-      sx={{ 
+    <Card
+      variant="outlined"
+      sx={{
         mb: 2,
         transition: 'all 0.3s ease-in-out',
-        '&:hover': {
-          boxShadow: 2
-        },
-        '@keyframes pulse': {
-          '0%': { opacity: 1 },
-          '50%': { opacity: 0.8 },
-          '100%': { opacity: 1 }
-        },
+        '&:hover': { boxShadow: 2 },
         '@keyframes slideIn': {
-          '0%': { opacity: 0, transform: 'translateY(10px)' },
-          '100%': { opacity: 1, transform: 'translateY(0)' }
+          '0%':   { opacity: 0, transform: 'translateY(10px)' },
+          '100%': { opacity: 1, transform: 'translateY(0)' },
         },
-        animation: 'slideIn 0.4s ease-out'
+        animation: 'slideIn 0.4s ease-out',
       }}
     >
       <CardContent>
-        {/* Connection status banner removed - users shouldn't see connection issues */}
-
-        {/* Enhanced Header avec statut */}
+        {/* Header avec statut */}
         <Box display="flex" alignItems="center" justifyContent="space-between" mb={2}>
           <Box display="flex" alignItems="center" gap={2}>
             {getStatusIcon(taskStatus.status || '')}
@@ -207,8 +225,8 @@ const TaskProgress: React.FC<TaskProgressProps> = ({
                 Tâche {taskStatus.task_type}
               </Typography>
               <Box display="flex" alignItems="center" gap={1} mt={0.5}>
-                <Chip 
-                  label={taskStatus.status?.toUpperCase() || 'UNKNOWN'} 
+                <Chip
+                  label={taskStatus.status?.toUpperCase() || 'UNKNOWN'}
                   color={getStatusColor(taskStatus.status || '') as any}
                   size="small"
                 />
@@ -225,12 +243,11 @@ const TaskProgress: React.FC<TaskProgressProps> = ({
               </Box>
             </Box>
           </Box>
-          
+
           <Box display="flex" alignItems="center" gap={1}>
-            {/* Connection indicators removed - focus on task progress only */}
-            <Button 
-              size="small" 
-              onClick={refreshStatus} 
+            <Button
+              size="small"
+              onClick={refreshStatus}
               startIcon={<RefreshIcon />}
               sx={{ minWidth: 'auto' }}
               disabled={connectionState === 'connecting'}
@@ -240,20 +257,19 @@ const TaskProgress: React.FC<TaskProgressProps> = ({
           </Box>
         </Box>
 
-        {/* Enhanced Progress Section avec Stepper AWS */}
+        {/* Stepper AWS (uniquement en cours d'exécution) */}
         {taskStatus.status === 'running' && (
           <Fade in={true}>
             <Box mb={3}>
-              {/* Stepper horizontal pour les étapes AWS */}
               <Stepper activeStep={getCurrentStepIndex(progressPercentage)} alternativeLabel sx={{ mb: 3 }}>
                 {AWS_DEPLOYMENT_STEPS.map((step) => {
-                  const isActive = progressPercentage >= step.progressRange[0] && progressPercentage <= step.progressRange[1];
+                  const isActive    = progressPercentage >= step.progressRange[0] && progressPercentage <= step.progressRange[1];
                   const isCompleted = progressPercentage > step.progressRange[1];
-                  const StepIcon = step.icon;
-                  
+                  const StepIcon    = step.icon;
+
                   return (
                     <Step key={step.id} completed={isCompleted}>
-                      <StepLabel 
+                      <StepLabel
                         icon={
                           isCompleted ? (
                             <CheckCircleIcon color="success" sx={{ fontSize: 24 }} />
@@ -267,8 +283,8 @@ const TaskProgress: React.FC<TaskProgressProps> = ({
                           '& .MuiStepLabel-label': {
                             fontSize: '0.75rem',
                             fontWeight: isActive ? 600 : 400,
-                            color: isActive ? 'primary.main' : isCompleted ? 'success.main' : 'text.secondary'
-                          }
+                            color: isActive ? 'primary.main' : isCompleted ? 'success.main' : 'text.secondary',
+                          },
                         }}
                       >
                         {step.label}
@@ -289,7 +305,7 @@ const TaskProgress: React.FC<TaskProgressProps> = ({
                 if (currentStepData) {
                   const stepProgress = getStepProgress(progressPercentage, currentStepData);
                   const StepIcon = currentStepData.icon;
-                  
+
                   return (
                     <Grow in={true}>
                       <Card variant="outlined" sx={{ bgcolor: 'primary.50', borderColor: 'primary.200' }}>
@@ -318,27 +334,25 @@ const TaskProgress: React.FC<TaskProgressProps> = ({
                               </Typography>
                             </Box>
                           </Box>
-                          
-                          {/* Progress bar pour l'étape courante */}
+
                           <Box display="flex" gap={1}>
-                            <LinearProgress 
-                              variant="determinate" 
+                            <LinearProgress
+                              variant="determinate"
                               value={progressPercentage}
                               color="primary"
-                              sx={{ 
+                              sx={{
                                 flex: 1,
-                                height: 6, 
+                                height: 6,
                                 borderRadius: 3,
                                 bgcolor: 'primary.100',
                                 '& .MuiLinearProgress-bar': {
                                   borderRadius: 3,
-                                  transition: 'transform 0.8s ease-in-out'
-                                }
+                                  transition: 'transform 0.8s ease-in-out',
+                                },
                               }}
                             />
                           </Box>
-                          
-                          {/* Message détaillé du backend */}
+
                           {currentStep && (
                             <Typography variant="body2" color="text.secondary" sx={{ mt: 1, fontStyle: 'italic' }}>
                               "{currentStep}"
@@ -366,34 +380,30 @@ const TaskProgress: React.FC<TaskProgressProps> = ({
                 {Math.round(progressPercentage)}%
               </Typography>
             </Box>
-            <LinearProgress 
-              variant="determinate" 
+            <LinearProgress
+              variant="determinate"
               value={progressPercentage}
               color={getStatusColor(taskStatus.status || '') as any}
-              sx={{ 
-                height: 8, 
+              sx={{
+                height: 8,
                 borderRadius: 4,
-                '& .MuiLinearProgress-bar': {
-                  transition: 'transform 0.5s ease-in-out'
-                }
+                '& .MuiLinearProgress-bar': { transition: 'transform 0.5s ease-in-out' },
               }}
             />
           </Box>
         )}
 
-        {/* Gestion d'erreurs - seulement les vraies erreurs de tâche */}
+        {/* Erreur de tâche */}
         {taskStatus.error_message && (
           <Alert severity="error" sx={{ mb: 2 }}>
             <Typography variant="body2" fontWeight={600}>
               Erreur pendant l'exécution
             </Typography>
-            <Typography variant="body2">
-              {taskStatus.error_message}
-            </Typography>
+            <Typography variant="body2">{taskStatus.error_message}</Typography>
           </Alert>
         )}
 
-        {/* Timeout warning */}
+        {/* Timeout */}
         {timeoutReached && (
           <Alert severity="warning" sx={{ mb: 2 }}>
             Timeout atteint. La tâche continue en arrière-plan.
@@ -419,105 +429,193 @@ const TaskProgress: React.FC<TaskProgressProps> = ({
           )}
         </Box>
 
-        {/* Enhanced Logs section */}
+        {/* Journal d'exécution — CHALLENGE 5 */}
         {showLogs && (
           <Box>
+            {/* En-tête du journal avec résumé des niveaux */}
             <Box display="flex" alignItems="center" justifyContent="space-between" mb={1}>
-              <Box display="flex" alignItems="center" gap={1}>
+              <Box display="flex" alignItems="center" gap={1} flexWrap="wrap">
                 <Typography variant="subtitle2" fontWeight={600}>
                   Journal d'exécution
                 </Typography>
+
+                {/* CHALLENGE 5 — compteur total */}
                 {logs.length > 0 && (
-                  <Chip 
-                    label={`${logs.length} entrées`} 
-                    size="small" 
-                    variant="outlined" 
+                  <Chip
+                    label={`${logs.length} entrée${logs.length > 1 ? 's' : ''}`}
+                    size="small"
+                    variant="outlined"
                     color="info"
                   />
                 )}
+
+                {/* CHALLENGE 5 — badges par niveau (erreurs et warnings seulement) */}
+                {(logCounts['error'] ?? 0) > 0 && (
+                  <Tooltip title={`${logCounts['error']} erreur(s)`}>
+                    <Chip
+                      label={logCounts['error']}
+                      size="small"
+                      icon={<ErrorIcon style={{ fontSize: 12 }} />}
+                      sx={{
+                        bgcolor: LOG_LEVEL_CONFIG.error.bgColor,
+                        color: LOG_LEVEL_CONFIG.error.color,
+                        fontWeight: 700,
+                        height: 22,
+                      }}
+                    />
+                  </Tooltip>
+                )}
+                {(logCounts['warning'] ?? 0) > 0 && (
+                  <Tooltip title={`${logCounts['warning']} avertissement(s)`}>
+                    <Chip
+                      label={logCounts['warning']}
+                      size="small"
+                      icon={<WarningIcon style={{ fontSize: 12 }} />}
+                      sx={{
+                        bgcolor: LOG_LEVEL_CONFIG.warning.bgColor,
+                        color: LOG_LEVEL_CONFIG.warning.color,
+                        fontWeight: 700,
+                        height: 22,
+                      }}
+                    />
+                  </Tooltip>
+                )}
               </Box>
-              <IconButton 
-                size="small" 
+
+              <IconButton
+                size="small"
                 onClick={() => setShowDetailedLogs(!showDetailedLogs)}
-                sx={{ 
+                sx={{
                   transform: showDetailedLogs ? 'rotate(0deg)' : 'rotate(180deg)',
-                  transition: 'transform 0.3s ease-in-out'
+                  transition: 'transform 0.3s ease-in-out',
                 }}
               >
                 <ExpandLessIcon />
               </IconButton>
             </Box>
-            
+
             <Collapse in={showDetailedLogs}>
-              <Box sx={{ 
-                bgcolor: 'background.paper', 
-                border: '1px solid',
-                borderColor: 'divider',
-                borderRadius: 2,
-                overflow: 'hidden'
-              }}>
+              <Box
+                sx={{
+                  bgcolor: '#0d1117',       // CHALLENGE 5 — fond sombre style terminal
+                  border: '1px solid',
+                  borderColor: 'divider',
+                  borderRadius: 2,
+                  overflow: 'hidden',
+                  fontFamily: 'monospace',
+                }}
+              >
                 {logs.length > 0 ? (
-                  <List dense sx={{ 
-                    maxHeight: 250,
-                    overflow: 'auto',
-                    '& .MuiListItem-root:nth-of-type(odd)': {
-                      bgcolor: 'rgba(0, 0, 0, 0.02)'
-                    }
-                  }}>
-                    {logs.slice(-10).map((log: TaskLog, index) => (
-                      <ListItem key={`log-${log.timestamp}-${index}`} sx={{ py: 1, px: 2 }}>
-                        <ListItemText
-                          primary={
-                            <Box display="flex" alignItems="center" gap={1}>
-                              <Box
-                                width={10}
-                                height={10}
-                                borderRadius="50%"
-                                bgcolor={getLogColor(log.level)}
-                                sx={{ 
-                                  boxShadow: `0 0 0 2px ${getLogColor(log.level)}33`,
-                                  animation: log.level === 'success' ? 'pulse 2s infinite' : 'none'
-                                }}
-                              />
-                              <Typography variant="body2" sx={{ flex: 1 }}>
-                                {log.message}
-                              </Typography>
-                              {log.progress_percentage && (
-                                <Chip 
-                                  label={`${Math.round(log.progress_percentage)}%`} 
-                                  size="small" 
-                                  variant="outlined"
-                                  color="primary"
+                  <List
+                    dense
+                    sx={{
+                      maxHeight: 300,      // CHALLENGE 5 — hauteur fixe avec scroll
+                      overflow: 'auto',
+                      py: 0.5,
+                    }}
+                  >
+                    {logs.map((log: TaskLog, index) => {
+                      const cfg = getLevelConfig(log.level);
+                      return (
+                        // CHALLENGE 5 — chaque entrée de log colorée selon son niveau
+                        <ListItem
+                          key={`log-${log.timestamp}-${index}`}
+                          sx={{
+                            py: 0.5,
+                            px: 2,
+                            borderLeft: `3px solid ${cfg.color}`,
+                            mb: 0.5,
+                            bgcolor: index % 2 === 0 ? 'rgba(255,255,255,0.03)' : 'transparent',
+                            transition: 'background 0.15s',
+                            '&:hover': { bgcolor: 'rgba(255,255,255,0.07)' },
+                          }}
+                        >
+                          <ListItemText
+                            primary={
+                              <Box display="flex" alignItems="center" gap={1}>
+                                {/* CHALLENGE 5 — badge de niveau */}
+                                <Chip
+                                  label={cfg.label}
+                                  size="small"
+                                  icon={cfg.icon as any}
+                                  sx={{
+                                    bgcolor: cfg.bgColor,
+                                    color: cfg.color,
+                                    fontWeight: 700,
+                                    fontSize: '0.65rem',
+                                    height: 20,
+                                    minWidth: 58,
+                                    '& .MuiChip-icon': { fontSize: '12px !important', color: `${cfg.color} !important` },
+                                  }}
                                 />
-                              )}
-                            </Box>
-                          }
-                          secondary={
-                            <Box display="flex" alignItems="center" gap={1} mt={0.5}>
-                              <Typography variant="caption" color="text.secondary">
+
+                                {/* CHALLENGE 5 — nom de l'étape si disponible */}
+                                {log.step_name && (
+                                  <Chip
+                                    label={log.step_name}
+                                    size="small"
+                                    variant="outlined"
+                                    sx={{
+                                      height: 18,
+                                      fontSize: '0.6rem',
+                                      color: 'rgba(255,255,255,0.5)',
+                                      borderColor: 'rgba(255,255,255,0.2)',
+                                    }}
+                                  />
+                                )}
+
+                                {/* Message principal */}
+                                <Typography
+                                  variant="body2"
+                                  sx={{
+                                    flex: 1,
+                                    color: cfg.color,
+                                    fontFamily: 'monospace',
+                                    fontSize: '0.78rem',
+                                    wordBreak: 'break-all',
+                                  }}
+                                >
+                                  {log.message}
+                                </Typography>
+
+                                {/* CHALLENGE 5 — pourcentage si disponible */}
+                                {log.progress_percentage != null && (
+                                  <Chip
+                                    label={`${Math.round(log.progress_percentage)}%`}
+                                    size="small"
+                                    variant="outlined"
+                                    sx={{
+                                      height: 18,
+                                      fontSize: '0.65rem',
+                                      color: 'rgba(255,255,255,0.6)',
+                                      borderColor: 'rgba(255,255,255,0.2)',
+                                    }}
+                                  />
+                                )}
+                              </Box>
+                            }
+                            secondary={
+                              // CHALLENGE 5 — timestamp discret
+                              <Typography
+                                variant="caption"
+                                sx={{ color: 'rgba(255,255,255,0.3)', fontFamily: 'monospace', fontSize: '0.65rem' }}
+                              >
                                 {formatTimestamp(log.timestamp)}
                               </Typography>
-                              {log.step_name && (
-                                <Chip 
-                                  label={log.step_name} 
-                                  size="small" 
-                                  variant="outlined"
-                                  sx={{ height: 20, fontSize: '0.7rem' }}
-                                />
-                              )}
-                            </Box>
-                          }
-                        />
-                      </ListItem>
-                    ))}
+                            }
+                          />
+                        </ListItem>
+                      );
+                    })}
+                    {/* CHALLENGE 5 — ancre pour auto-scroll */}
+                    <div ref={logsEndRef} />
                   </List>
                 ) : (
                   <Box py={4} textAlign="center">
-                    <Typography variant="body2" color="text.secondary">
-                      {taskStatus?.status === 'pending' ? 
-                        ' En attente du démarrage de la tâche...' : 
-                        ' Aucun log disponible pour le moment'
-                      }
+                    <Typography variant="body2" sx={{ color: 'rgba(255,255,255,0.4)', fontFamily: 'monospace' }}>
+                      {taskStatus?.status === 'pending'
+                        ? '⏳ En attente du démarrage de la tâche...'
+                        : '— Aucun log disponible —'}
                     </Typography>
                   </Box>
                 )}
