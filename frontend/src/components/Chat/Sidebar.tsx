@@ -12,6 +12,7 @@ import {
   Fade,
   alpha,
   CircularProgress,
+  useTheme,
 } from "@mui/material";
 import {
   Delete,
@@ -34,7 +35,16 @@ interface ChatSummary {
   id: number;
   name: string;
   created_at?: string;
+  status?: string; // draft | running | deployed | error
 }
+
+// Métadonnées d'affichage du statut de conversation
+const STATUS_META: Record<string, { label: string; color: string }> = {
+  running: { label: "En cours", color: "#f59e0b" },
+  deployed: { label: "Déployé", color: "#10b981" },
+  error: { label: "Erreur", color: "#ef4444" },
+  draft: { label: "Brouillon", color: "#94a3b8" },
+};
 
 interface ChatSidebarProps {
   chats: ChatSummary[];
@@ -55,6 +65,8 @@ export default function ChatSidebar({
   onCreateNewChat,
   onRefreshChats,
 }: ChatSidebarProps) {
+  const theme = useTheme();
+  const isDark = theme.palette.mode === "dark";
   const [editingId, setEditingId] = useState<number | null>(null);
   const [editText, setEditText] = useState("");
   const [deleteModalOpen, setDeleteModalOpen] = useState(false);
@@ -128,7 +140,10 @@ export default function ChatSidebar({
         width: { xs: "100%", md: "320px" },
         height: { xs: "auto", md: "100vh" },
         minHeight: { xs: "60px", md: "100vh" },
-        background: "linear-gradient(180deg, #1e293b 0%, #0f172a 100%)",
+        background: isDark
+          ? "linear-gradient(180deg, rgba(30,41,59,0.85) 0%, rgba(15,23,42,0.92) 100%)"
+          : "linear-gradient(180deg, rgba(255,255,255,0.78) 0%, rgba(238,242,255,0.62) 100%)",
+        backdropFilter: "blur(18px) saturate(160%)",
         color: "text.primary",
         display: "flex",
         flexDirection: "column",
@@ -382,6 +397,39 @@ export default function ChatSidebar({
                             >
                               {formatRelativeTime(chat.created_at)}
                             </Typography>
+                            {/* Badge de statut de la conversation */}
+                            {chat.status &&
+                              chat.status !== "draft" &&
+                              STATUS_META[chat.status] && (
+                                <Box
+                                  component="span"
+                                  sx={{
+                                    ml: 0.75,
+                                    display: "inline-flex",
+                                    alignItems: "center",
+                                    gap: 0.4,
+                                  }}
+                                >
+                                  <Box
+                                    sx={{
+                                      width: 7,
+                                      height: 7,
+                                      borderRadius: "50%",
+                                      bgcolor: STATUS_META[chat.status].color,
+                                    }}
+                                  />
+                                  <Typography
+                                    variant="caption"
+                                    sx={{
+                                      fontSize: "0.68rem",
+                                      fontWeight: 600,
+                                      color: STATUS_META[chat.status].color,
+                                    }}
+                                  >
+                                    {STATUS_META[chat.status].label}
+                                  </Typography>
+                                </Box>
+                              )}
                           </Box>
                         </Tooltip>
                       </Box>

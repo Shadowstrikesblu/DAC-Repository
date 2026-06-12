@@ -12,6 +12,7 @@ import {
   Menu,
   MenuItem,
   Divider,
+  Tooltip,
   alpha,
   useTheme,
 } from "@mui/material";
@@ -19,14 +20,34 @@ import {
   AccountCircle,
   Settings,
   Logout,
+  LightMode,
+  DarkMode,
+  MenuOpen,
+  Menu as MenuHamburger,
+  UnfoldLess,
+  UnfoldMore,
 } from "@mui/icons-material";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../../context/AuthContext";
+import { useColorMode } from "../../context/ColorModeContext";
 
-const ChatTopBar: React.FC = () => {
+interface ChatTopBarProps {
+  onToggleSidebar?: () => void;
+  sidebarOpen?: boolean;
+  onToggleHeader?: () => void;
+  headerOpen?: boolean;
+}
+
+const ChatTopBar: React.FC<ChatTopBarProps> = ({
+  onToggleSidebar,
+  sidebarOpen,
+  onToggleHeader,
+  headerOpen,
+}) => {
   const theme = useTheme();
   const navigate = useNavigate();
   const { logout, user } = useAuth();
+  const { mode, toggleColorMode } = useColorMode();
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
 
   const handleProfileMenuOpen = (event: React.MouseEvent<HTMLElement>) => {
@@ -59,7 +80,51 @@ const ChatTopBar: React.FC = () => {
         boxShadow: "none",
       }}
     >
-      <Toolbar sx={{ justifyContent: "flex-end", pr: 2 }}>
+      <Toolbar
+        variant="dense"
+        sx={{ justifyContent: "space-between", gap: 0.5, px: { xs: 1, sm: 2 }, minHeight: { xs: 44, sm: 48 } }}
+      >
+        {/* Groupe gauche : replier sidebar + replier header */}
+        <Box sx={{ display: "flex", alignItems: "center", gap: 0.5 }}>
+          {onToggleSidebar && (
+            <Tooltip title={sidebarOpen ? "Replier le menu" : "Déplier le menu"} arrow>
+              <IconButton
+                onClick={onToggleSidebar}
+                color="inherit"
+                sx={{ color: "text.primary" }}
+                aria-label="replier le menu latéral"
+              >
+                {sidebarOpen ? <MenuOpen fontSize="small" /> : <MenuHamburger fontSize="small" />}
+              </IconButton>
+            </Tooltip>
+          )}
+          {onToggleHeader && (
+            <Tooltip title={headerOpen ? "Replier l'en-tête" : "Déplier l'en-tête"} arrow>
+              <IconButton
+                onClick={onToggleHeader}
+                color="inherit"
+                sx={{ color: "text.primary" }}
+                aria-label="replier l'en-tête"
+              >
+                {headerOpen ? <UnfoldLess fontSize="small" /> : <UnfoldMore fontSize="small" />}
+              </IconButton>
+            </Tooltip>
+          )}
+        </Box>
+
+        <Box sx={{ display: "flex", alignItems: "center", gap: 0.5 }}>
+        {/* Bascule thème clair / sombre */}
+        <Tooltip title={mode === "dark" ? "Passer en clair" : "Passer en sombre"} arrow>
+          <IconButton
+            onClick={toggleColorMode}
+            color="inherit"
+            sx={{ color: "text.primary" }}
+            aria-label="basculer le thème"
+          >
+            {mode === "dark" ? <LightMode fontSize="small" /> : <DarkMode fontSize="small" />}
+          </IconButton>
+        </Tooltip>
+
         {/* Profile Menu Button */}
         <IconButton
           size="large"
@@ -80,6 +145,7 @@ const ChatTopBar: React.FC = () => {
             {user?.email?.[0]?.toUpperCase() || "U"}
           </Avatar>
         </IconButton>
+        </Box>
 
         {/* Profile Menu */}
         <Menu

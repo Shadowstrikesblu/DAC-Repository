@@ -309,6 +309,16 @@ def list_all_chats(
         .all()
     )
 
+    def _status_from_state(state: str | None) -> str:
+        s = (state or "").lower()
+        if any(k in s for k in ("executing", "running", "in_progress")):
+            return "running"
+        if any(k in s for k in ("deployed", "completed")):
+            return "deployed"
+        if any(k in s for k in ("error", "failed")):
+            return "error"
+        return "draft"
+
     return [
         {
             "chat_id": c.id,
@@ -317,6 +327,7 @@ def list_all_chats(
             "created_at": ensure_timezone_aware(c.created_at).isoformat() if c.created_at else None,
             # le mode vient TOUJOURS de la session
             "mode": c.session.mode,
+            "status": _status_from_state(getattr(c.session, "state", None)),
         }
         for c in chats
     ]
@@ -334,6 +345,25 @@ def get_session_state(
     session = db.query(models.Session).filter_by(id=session_id, user_id=user.id).first()
     if not session:
         raise HTTPException(status_code=404, detail="Session non trouvée.")
+
+
+@router.post("/reset_state", summary="Réinitialiser l'état d'une session à awaiting_intent (débloquer)")
+def reset_session_state(
+    payload: dict = Body(...),
+    db: Session = Depends(get_db),
+    user: models.User = Depends(get_current_user),
+):
+    """Débloque une session coincée (ex. restée en 'executing') en la remettant
+    à 'awaiting_intent'. La saisie redevient alors active côté frontend."""
+    session_id = payload.get("session_id")
+    session = db.query(models.Session).filter_by(id=session_id, user_id=user.id).first()
+    if not session:
+        raise HTTPException(status_code=404, detail="Session non trouvée.")
+    session.state = "awaiting_intent"
+    session.session_temp_data = None
+    db.commit()
+    db.refresh(session)
+    return {"status": "ok", "session_id": session.id, "state": session.state}
 
 #  Passer de Free Chat à DAC (Distributed Audit & Configure)
 @router.post("/switch_to_dac", response_model=SwitchToDACResponse, summary="Passer du mode Free Chat au mode DAC")

@@ -47,10 +47,10 @@ export default function ConfirmDeleteModal({
       aria-describedby="alert-dialog-slide-description"
       PaperProps={{
         sx: {
-          bgcolor: alpha('#1e293b', 0.95),
+          bgcolor: alpha(theme.palette.background.paper, 0.95),
           backdropFilter: 'blur(20px)',
           border: '1px solid',
-          borderColor: alpha('#475569', 0.3),
+          borderColor: theme.palette.divider,
           borderRadius: 3,
           minWidth: 400,
           maxWidth: 500,

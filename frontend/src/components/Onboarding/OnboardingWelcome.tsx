@@ -81,7 +81,7 @@ export default function OnboardingWelcome({
             width: "100%",
             p: 3,
             mb: 4,
-            bgcolor: alpha("#1e293b", 0.8),
+            bgcolor: "background.paper",
             backdropFilter: "blur(20px)",
             border: "1px solid",
             borderColor: alpha("#475569", 0.3),

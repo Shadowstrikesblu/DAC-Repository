@@ -4,8 +4,7 @@
 import { StrictMode } from "react";
 import { createRoot } from "react-dom/client";
 import App from "./App";
-import { ThemeProvider, CssBaseline } from "@mui/material";
-import theme from "./theme";
+import { ColorModeProvider } from "./context/ColorModeContext";
 import "./assets/chat.css";
 
 //  Ajout React Query
@@ -16,10 +15,9 @@ const queryClient = new QueryClient();
 createRoot(document.getElementById("root")!).render(
   <StrictMode>
     <QueryClientProvider client={queryClient}>
-      <ThemeProvider theme={theme}>
-        <CssBaseline />
+      <ColorModeProvider>
         <App />
-      </ThemeProvider>
+      </ColorModeProvider>
     </QueryClientProvider>
   </StrictMode>,
 );

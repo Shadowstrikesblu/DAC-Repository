@@ -9,6 +9,7 @@ import {
   Tooltip,
   Divider,
   alpha,
+  useTheme,
 } from "@mui/material";
 import { Visibility, VisibilityOff, Save, Delete } from "@mui/icons-material";
 import { useState, useEffect } from "react";
@@ -30,6 +31,7 @@ export default function AWSCredentialsForm({
   onDelete,
   initialCredentials,
 }: AWSCredentialsFormProps) {
+  const theme = useTheme();
   const [credentials, setCredentials] = useState<AWSCredentials>({
     accessKeyId: "",
     secretAccessKey: "",
@@ -114,7 +116,7 @@ export default function AWSCredentialsForm({
       elevation={0}
       sx={{
         p: 4,
-        bgcolor: alpha('#1e293b', 0.8),
+        bgcolor: alpha(theme.palette.background.paper, 0.8),
         backdropFilter: 'blur(20px)',
         border: '1px solid',
         borderColor: alpha('#475569', 0.3),

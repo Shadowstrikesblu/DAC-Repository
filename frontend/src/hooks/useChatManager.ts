@@ -14,6 +14,7 @@ interface Chat {
   session_id: string;
   created_at?: string;
   mode?: "free" | "dac"; // Mode du chat (source de vérité depuis backend)
+  status?: string; // draft | running | deployed | error (dérivé de session.state)
 }
 
 export interface ChatMessage {
@@ -176,6 +177,7 @@ export function useChatManager() {
           session_id: chat.session_id ?? null,
           created_at: chat.created_at,
           mode: chat.mode || "dac", //  MODE depuis backend (source de vérité)
+          status: chat.status, // statut dérivé de session.state
         }))
         .filter((chat: Chat) => chat.session_id !== null)
         .sort(

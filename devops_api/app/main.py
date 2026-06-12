@@ -184,6 +184,30 @@ async def startup_event():
     # 3) initialiser scheduler auto-sync (P0.1)
     init_scheduler()
 
+    # 4) Reset des sessions orphelines restées "executing" après un redémarrage :
+    #    aucune tâche d'arrière-plan ne survit au reboot du backend, donc une session
+    #    bloquée en "executing" empêcherait l'utilisateur d'interagir (saisie désactivée).
+    try:
+        from app.database import SessionLocal
+        from app import models
+        db = SessionLocal()
+        try:
+            stuck = (
+                db.query(models.Session)
+                .filter(models.Session.state.in_(["executing", "running", "in_progress"]))
+                .all()
+            )
+            for s in stuck:
+                s.state = "awaiting_intent"
+                s.session_temp_data = None
+            if stuck:
+                db.commit()
+                logger.info("[startup] %d session(s) orpheline(s) 'executing' réinitialisée(s)", len(stuck))
+        finally:
+            db.close()
+    except Exception as e:
+        logger.warning("[startup] reset des sessions orphelines échoué: %s", e)
+
 @app.on_event("shutdown")
 async def shutdown_event():
     """Cleanup on API shutdown."""
