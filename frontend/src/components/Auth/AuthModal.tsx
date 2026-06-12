@@ -75,17 +75,17 @@ const AuthModal: React.FC<AuthModalProps> = ({
       TransitionComponent={Transition}
       PaperProps={{
         sx: {
-          bgcolor: alpha("#1e293b", 0.95),
+          bgcolor: (t) => alpha(t.palette.background.paper, 0.95),
           backdropFilter: "blur(20px)",
           borderRadius: 3,
           border: "1px solid",
-          borderColor: alpha("#475569", 0.3),
+          borderColor: "divider",
           boxShadow: "0 25px 50px -12px rgba(0, 0, 0, 0.25)",
         },
       }}
       BackdropProps={{
         sx: {
-          bgcolor: alpha("#0f172a", 0.8),
+          bgcolor: (t) => alpha(t.palette.background.default, 0.8),
           backdropFilter: "blur(4px)",
         },
       }}

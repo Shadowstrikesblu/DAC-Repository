@@ -92,7 +92,7 @@ const LoginForm: React.FC = () => {
           }}
           sx={{
             '& .MuiOutlinedInput-root': {
-              bgcolor: alpha('#334155', 0.2),
+              bgcolor: (t) => alpha(t.palette.text.primary, 0.05),
             },
           }}
         />
@@ -125,7 +125,7 @@ const LoginForm: React.FC = () => {
           }}
           sx={{
             '& .MuiOutlinedInput-root': {
-              bgcolor: alpha('#334155', 0.2),
+              bgcolor: (t) => alpha(t.palette.text.primary, 0.05),
             },
           }}
         />

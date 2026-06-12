@@ -34,7 +34,7 @@ import {
   getAWSCredentialsForChat,
   hasAWSCredentials,
 } from "../utils/awsCredentialsHelper";
-import axiosClient from "../api/axiosClient";
+import axiosClient, { resetSessionState } from "../api/axiosClient";
 import { useState, useEffect, useCallback, useRef } from "react";
 // États qui affichent les composants de setup
 const SETUP_STATES: ChatState[] = [
@@ -390,6 +390,19 @@ export default function ChatPage() {
     awaiting_ssm_fix_confirm:
       "Tu es dans SSM -> confirmation bootstrap. Réponds par 'oui' ou 'non'.",
     deletion_mode: "Tu es dans Suppression. Donne des IDs, ou tape 'lister'.",
+  };
+
+  // Débloque une session coincée (ex. restée en "executing") et réactive la saisie.
+  const handleResetSession = async () => {
+    if (!sessionId) return;
+    try {
+      await resetSessionState(sessionId);
+      setCurrentSessionState("awaiting_intent");
+      await refreshChats();
+      if (selectedChatId) await selectChat(selectedChatId);
+    } catch (e) {
+      console.error("[reset session] échec:", e);
+    }
   };
 
   // Patch sendMessage pour capter session_state
@@ -767,19 +780,49 @@ export default function ChatPage() {
               )}
             </Box>
 
+            {/* Bandeau de déblocage quand une tâche bloque la saisie */}
+            {isExecuting && (
+              <Box
+                sx={{
+                  flex: "0 0 auto",
+                  px: 2,
+                  py: 1,
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "space-between",
+                  gap: 1,
+                  bgcolor: (t) => alpha(t.palette.warning.main, 0.12),
+                  borderTop: "1px solid",
+                  borderColor: "divider",
+                }}
+              >
+                <Typography variant="caption" color="text.secondary">
+                  ⏳ Tâche en cours… La saisie est désactivée. Bloqué ?
+                </Typography>
+                <Button
+                  size="small"
+                  color="warning"
+                  variant="outlined"
+                  onClick={handleResetSession}
+                >
+                  Réinitialiser
+                </Button>
+              </Box>
+            )}
+
             {/* Input sticky en bas - FIXE */}
             <Box
               sx={{
                 flex: "0 0 auto", // Ne jamais se compresser
                 borderTop: "1px solid",
                 borderColor: "divider",
-                bgcolor: alpha("#1e293b", 0.3),
+                bgcolor: (t) => alpha(t.palette.background.paper, 0.3),
                 backdropFilter: "blur(20px)",
               }}
             >
               <ChatInput
                 chatId={selectedChatId}
-                onSend={sendMessage}
+                onSend={wrappedSendMessage}
                 disabled={inputDisabled}
               />
             </Box>

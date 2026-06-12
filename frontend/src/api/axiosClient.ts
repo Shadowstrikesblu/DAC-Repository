@@ -267,6 +267,14 @@ export const deleteChat = async (chatId: number) => {
   return res.data;
 };
 
+// Débloque une session coincée (ex. restée en "executing") -> awaiting_intent
+export const resetSessionState = async (sessionId: number | string) => {
+  const res = await axiosClient.post(`/chats/reset_state`, {
+    session_id: Number(sessionId),
+  });
+  return res.data;
+};
+
 /* ============================================================================
     AWS Credentials Management
 ============================================================================ */
