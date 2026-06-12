@@ -6,7 +6,7 @@ import {
   alpha,
   CircularProgress,
 } from "@mui/material";
-import { Construction, Chat as ChatIcon } from "@mui/icons-material";
+import { Construction, Chat as ChatIcon, Visibility } from "@mui/icons-material";
 
 import { useChatMode } from "../../contexts/ChatModeContext";
 import { hasAWSCredentials } from "../../utils/awsCredentialsHelper";
@@ -24,6 +24,8 @@ interface ChatModeToggleProps {
   onNeedCredentials?: () => void;
   onModeChanged?: (mode: string) => void;
   onBotMessage?: (msg: string) => void;
+  previewMode?: boolean;
+  onTogglePreview?: () => void;
 }
 
 const ONBOARDING_ROUTE = "/onboarding/aws";
@@ -46,6 +48,8 @@ export default function ChatModeToggle({
   onNeedCredentials,
   onModeChanged,
   onBotMessage,
+  previewMode,
+  onTogglePreview,
 }: ChatModeToggleProps) {
   const { chatMode, setChatMode } = useChatMode();
   const [hasCredentials, setHasCredentials] = useState<boolean>(false);
@@ -206,10 +210,12 @@ export default function ChatModeToggle({
       sx={{
         display: "flex",
         alignItems: "center",
-        gap: 1.5,
-        p: 1.5,
-        borderRadius: "8px",
-        backgroundColor: alpha("#334155", 0.4),
+        flexWrap: "wrap",
+        gap: { xs: 1, sm: 1.5 },
+        px: { xs: 1.5, sm: 2 },
+        py: 1,
+        backgroundColor: (t) =>
+          alpha(t.palette.text.primary, t.palette.mode === "dark" ? 0.06 : 0.04),
         borderBottom: "1px solid",
         borderColor: "divider",
       }}
@@ -268,6 +274,32 @@ export default function ChatModeToggle({
           </Button>
         </Box>
       </Tooltip>
+
+      {/* Toggle Mode Simulation (dry-run) — bleu clair */}
+      {onTogglePreview && (
+        <Tooltip title="Mode simulation : les commandes sont prévisualisées (dry-run) sans être exécutées">
+          <Box component="span">
+            <Chip
+              icon={<Visibility />}
+              label="Simulation"
+              variant={previewMode ? "filled" : "outlined"}
+              onClick={onTogglePreview}
+              sx={{
+                cursor: "pointer",
+                fontWeight: previewMode ? "bold" : "normal",
+                transition: "all 0.3s ease",
+                color: previewMode ? "#fff" : "#38bdf8",
+                bgcolor: previewMode ? "#38bdf8" : "transparent",
+                borderColor: "#38bdf8",
+                "& .MuiChip-icon": { color: previewMode ? "#fff" : "#38bdf8" },
+                "&:hover": {
+                  bgcolor: previewMode ? "#0ea5e9" : alpha("#38bdf8", 0.14),
+                },
+              }}
+            />
+          </Box>
+        </Tooltip>
+      )}
 
       {/* Status indicator */}
       <Tooltip

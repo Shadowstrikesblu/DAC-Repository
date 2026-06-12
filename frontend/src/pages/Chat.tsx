@@ -11,6 +11,7 @@ import {
   Button,
   LinearProgress,
   Typography,
+  Collapse,
 } from "@mui/material";
 import ChatSidebar from "../components/Chat/Sidebar";
 import ChatWindow from "../components/Chat/ChatWindow";
@@ -73,6 +74,36 @@ export default function ChatPage() {
   //  État local pour le panel AWS
   const [awsPanelOpen, setAwsPanelOpen] = useState(false);
   const [showAWSWarning, setShowAWSWarning] = useState(false);
+  // Sidebar repliable (persistée)
+  const [sidebarOpen, setSidebarOpen] = useState(
+    () => localStorage.getItem("dac_sidebar_open") !== "false",
+  );
+  const toggleSidebar = () =>
+    setSidebarOpen((v) => {
+      const nv = !v;
+      localStorage.setItem("dac_sidebar_open", String(nv));
+      return nv;
+    });
+  // Header repliable (persisté)
+  const [headerOpen, setHeaderOpen] = useState(
+    () => localStorage.getItem("dac_header_open") !== "false",
+  );
+  const toggleHeader = () =>
+    setHeaderOpen((v) => {
+      const nv = !v;
+      localStorage.setItem("dac_header_open", String(nv));
+      return nv;
+    });
+  // Mode simulation (dry-run) : préfixe "simuler " aux messages envoyés
+  const [previewMode, setPreviewMode] = useState(
+    () => localStorage.getItem("dac_preview_mode") === "true",
+  );
+  const togglePreview = () =>
+    setPreviewMode((v) => {
+      const nv = !v;
+      localStorage.setItem("dac_preview_mode", String(nv));
+      return nv;
+    });
   const [credentialsLoaded, setCredentialsLoaded] = useState(false);
 
   //  Étape 5-7: Polling state pour l'audit
@@ -363,7 +394,14 @@ export default function ChatPage() {
 
   // Patch sendMessage pour capter session_state
   const wrappedSendMessage = async (msg: string) => {
-    const res = await sendMessage(msg);
+    // Mode simulation : on préfixe "simuler " pour déclencher le dry-run (sauf mots de contrôle).
+    let outgoing = msg;
+    const lower = msg.trim().toLowerCase();
+    const controlWords = ["oui", "non", "ok", "annuler", "cancel", "aide", "help", "menu", "?"];
+    if (previewMode && !lower.startsWith("simuler") && !controlWords.includes(lower)) {
+      outgoing = `simuler ${msg.trim()}`;
+    }
+    const res = await sendMessage(outgoing);
     if (res && typeof res === "object" && "session_state" in res) {
       const newState = res.session_state as string;
       // si on était dans un état actif et que ça revient à awaiting_intent -> reset
@@ -455,13 +493,15 @@ export default function ChatPage() {
         flexDirection: { xs: "column", md: "row" },
       }}
     >
-      {/* Sidebar avec son propre scroll - FIXE */}
+      {/* Sidebar repliable avec son propre scroll - FIXE */}
       <Box
         sx={{
           height: "100vh",
-          overflowY: "auto",
+          overflow: "hidden",
           minWidth: 0,
           flex: "0 0 auto",
+          width: sidebarOpen ? { xs: "100%", md: "320px" } : "0px",
+          transition: "width 0.25s ease",
         }}
       >
         <ChatSidebar
@@ -530,7 +570,12 @@ export default function ChatPage() {
         )}
 
         {/*  TopBar with profile menu - FIXED at top */}
-        <ChatTopBar />
+        <ChatTopBar
+          onToggleSidebar={toggleSidebar}
+          sidebarOpen={sidebarOpen}
+          onToggleHeader={toggleHeader}
+          headerOpen={headerOpen}
+        />
 
         {/* Header + Mode Bar - FIXE EN HAUT */}
         <Box sx={{ flex: "0 0 auto", overflow: "hidden" }}>
@@ -556,17 +601,21 @@ export default function ChatPage() {
             </Box>
           )}
 
-          {/* Header professionnel */}
-          <ChatHeader
-            sessionId={sessionId}
-            chatState={chatState}
-            onAWSPanelOpen={() => setAwsPanelOpen(true)}
-          />
+          {/* Header professionnel (repliable) */}
+          <Collapse in={headerOpen} timeout={250}>
+            <ChatHeader
+              sessionId={sessionId}
+              chatState={chatState}
+              onAWSPanelOpen={() => setAwsPanelOpen(true)}
+            />
+          </Collapse>
 
-          {/*  Mode Toggle Free/DAC */}
+          {/*  Mode Toggle Free/DAC + Simulation */}
           <ChatModeToggle
             sessionId={selectedChat?.session_id ?? sessionId ?? undefined}
             chatId={selectedChat?.id ?? selectedChatId}
+            previewMode={previewMode}
+            onTogglePreview={togglePreview}
             onNeedCredentials={() => setAwsPanelOpen(true)}
             onModeChanged={(mode) => {
               if (!selectedChatId) return;

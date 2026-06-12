@@ -197,6 +197,7 @@ class ChatInfo(BaseModel):
     session_id: int
     created_at: Optional[str]
     mode: Optional[str] = "dac"  # Mode du chat (free ou dac)
+    status: Optional[str] = None  # draft | running | deployed | error (dérivé de session.state)
 
     class Config:
         orm_mode = True

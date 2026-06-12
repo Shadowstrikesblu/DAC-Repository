@@ -1,7 +1,7 @@
 // © 2024–2026 TOURE Arnaud Patrick
 // Licensed under the MIT License
 
-import { TextField, IconButton, Paper, alpha, Fade, Box, Chip } from "@mui/material";
+import { TextField, IconButton, Paper, alpha, Fade, Box, Chip, useTheme } from "@mui/material";
 import { Send, AutoAwesome } from "@mui/icons-material";
 import { useState, useEffect, useRef, type KeyboardEvent } from "react";
 
@@ -23,6 +23,7 @@ export default function ChatInput({
   chatId,
   disabled = false,
 }: ChatInputProps) {
+  const theme = useTheme();
   const [text, setText] = useState("");
   const inputRef = useRef<HTMLTextAreaElement | null>(null); //  textarea pour multiline
 
@@ -65,7 +66,7 @@ export default function ChatInput({
   return (
     <Box
       sx={{
-        bgcolor: alpha("#1e293b", 0.8),
+        bgcolor: alpha(theme.palette.background.paper, 0.7),
         backdropFilter: "blur(20px)",
         borderTop: "1px solid",
         borderColor: "divider",
@@ -133,11 +134,11 @@ export default function ChatInput({
         aria-label="Message input"
         sx={{
           "& .MuiOutlinedInput-root": {
-            bgcolor: alpha("#334155", 0.3),
+            bgcolor: alpha(theme.palette.text.primary, 0.04),
             borderRadius: 3,
             fontSize: "0.875rem",
             "& fieldset": {
-              borderColor: alpha("#475569", 0.5),
+              borderColor: theme.palette.divider,
             },
             "&:hover fieldset": {
               borderColor: "primary.main",

@@ -284,12 +284,6 @@ export default function ChatWindow({
         position: "relative",
       }}
     >
-      {/* DEBUG (unique ligne) */}
-      <Box sx={{ p: 1, bgcolor: "#f0f0f0", fontSize: "10px", color: "#666" }}>
-        chatId={chatId ?? "-"}, sessionId={sessionId ?? "-"}, mode={chatMode},
-        messages={messages.length}
-      </Box>
-
       <Box
         ref={scrollContainerRef}
         onScroll={() => {

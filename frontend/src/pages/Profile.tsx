@@ -7,6 +7,7 @@ import {
   alpha,
   IconButton,
   Tooltip,
+  useTheme,
 } from "@mui/material";
 import { Settings, Person, ArrowBack } from "@mui/icons-material";
 import { useNavigate } from "react-router-dom";
@@ -26,6 +27,7 @@ interface AWSCredentials {
 }
 
 export default function Profile() {
+  const theme = useTheme();
   const [awsCredentials, setAwsCredentials] = useState<AWSCredentials | null>(
     null,
   );
@@ -91,7 +93,7 @@ export default function Profile() {
     <Box
       sx={{
         minHeight: "100vh",
-        background: "linear-gradient(180deg, #0f172a 0%, #1e293b 100%)",
+        background: "transparent",
         py: 4,
       }}
     >
@@ -102,7 +104,7 @@ export default function Profile() {
           sx={{
             p: 4,
             mb: 4,
-            bgcolor: alpha("#1e293b", 0.8),
+            bgcolor: alpha(theme.palette.background.paper, 0.8),
             backdropFilter: "blur(20px)",
             border: "1px solid",
             borderColor: alpha("#475569", 0.3),
@@ -177,7 +179,7 @@ export default function Profile() {
             elevation={0}
             sx={{
               p: 4,
-              bgcolor: alpha("#1e293b", 0.8),
+              bgcolor: alpha(theme.palette.background.paper, 0.8),
               backdropFilter: "blur(20px)",
               border: "1px solid",
               borderColor: alpha("#475569", 0.3),

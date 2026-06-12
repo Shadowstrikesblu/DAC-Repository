@@ -153,7 +153,7 @@ export default function OnboardingWizard({
       }}
       BackdropProps={{
         sx: {
-          bgcolor: alpha("#0f172a", 0.9),
+          bgcolor: "background.default",
           backdropFilter: "blur(8px)",
         },
       }}
@@ -172,7 +172,7 @@ export default function OnboardingWizard({
             <IconButton
               onClick={handleClose}
               sx={{
-                bgcolor: alpha("#1e293b", 0.8),
+                bgcolor: "background.paper",
                 backdropFilter: "blur(20px)",
                 border: "1px solid",
                 borderColor: alpha("#475569", 0.3),
@@ -206,7 +206,7 @@ export default function OnboardingWizard({
               px: 2,
               borderBottom: "1px solid",
               borderColor: alpha("#475569", 0.3),
-              bgcolor: alpha("#1e293b", 0.5),
+              bgcolor: "background.paper",
               backdropFilter: "blur(20px)",
             }}
           >

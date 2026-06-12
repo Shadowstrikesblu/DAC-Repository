@@ -9,8 +9,16 @@ DATABASE_URL = os.getenv("DATABASE_URL")
 
 engine = create_engine(
     DATABASE_URL,
-    echo=True,
-    future=True  # Activation du mode SQLAlchemy 2.x
+    # echo=True inondait les logs (et coûtait un peu) : pilotable par env, OFF par défaut.
+    echo=os.getenv("DAC_SQL_ECHO", "false").lower() == "true",
+    future=True,  # Activation du mode SQLAlchemy 2.x
+    # Robustesse du pool : évite la saturation (QueuePool limit ... timed out)
+    # et les connexions mortes.
+    pool_size=int(os.getenv("DAC_DB_POOL_SIZE", "20")),
+    max_overflow=int(os.getenv("DAC_DB_MAX_OVERFLOW", "30")),
+    pool_timeout=int(os.getenv("DAC_DB_POOL_TIMEOUT", "30")),
+    pool_recycle=int(os.getenv("DAC_DB_POOL_RECYCLE", "1800")),
+    pool_pre_ping=True,
 )
 
 SessionLocal = sessionmaker(

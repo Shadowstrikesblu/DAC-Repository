@@ -309,6 +309,16 @@ def list_all_chats(
         .all()
     )
 
+    def _status_from_state(state: str | None) -> str:
+        s = (state or "").lower()
+        if any(k in s for k in ("executing", "running", "in_progress")):
+            return "running"
+        if any(k in s for k in ("deployed", "completed")):
+            return "deployed"
+        if any(k in s for k in ("error", "failed")):
+            return "error"
+        return "draft"
+
     return [
         {
             "chat_id": c.id,
@@ -317,6 +327,7 @@ def list_all_chats(
             "created_at": ensure_timezone_aware(c.created_at).isoformat() if c.created_at else None,
             # le mode vient TOUJOURS de la session
             "mode": c.session.mode,
+            "status": _status_from_state(getattr(c.session, "state", None)),
         }
         for c in chats
     ]
