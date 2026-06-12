@@ -2,6 +2,7 @@ import { Box, Paper, Typography, Avatar, alpha, useTheme } from "@mui/material";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import { parseServerDate } from "../../utils/dateUtils";
+import ErrorAnalysisPanel from "../AI/ErrorAnalysisPanel";
 
 // Mapping markdown -> MUI sans spread de props (évite ref/className)
 const mdComponents = {
@@ -163,6 +164,48 @@ interface MessageBubbleProps {
   isConsecutive: boolean;
 }
 
+function resolveExecutionId(extra: any, text?: string): number | null {
+  if (extra && typeof extra === "object") {
+    const candidates = [
+      extra.execution_id_db,
+      extra.execution_id,
+      extra.executionId,
+      extra.execution?.id,
+      extra.execution?.execution_id,
+      extra.result?.execution_id,
+      extra.data?.execution_id,
+      extra.execution_db_id,
+    ];
+
+    for (const value of candidates) {
+      const asNumber =
+        typeof value === "number"
+          ? value
+          : typeof value === "string"
+            ? Number(value)
+            : NaN;
+
+      if (Number.isFinite(asNumber) && asNumber > 0) {
+        return asNumber;
+      }
+    }
+  }
+
+  const sourceText = String(text || "");
+  const textMatch =
+    sourceText.match(/execution[_\s-]?id[:\s`#-]*([0-9]+)/i) ||
+    sourceText.match(/\bexec(?:ution)?[#\s-]*([0-9]{1,})\b/i);
+
+  if (textMatch?.[1]) {
+    const parsed = Number(textMatch[1]);
+    if (Number.isFinite(parsed) && parsed > 0) {
+      return parsed;
+    }
+  }
+
+  return null;
+}
+
 type BotMessageType = "info" | "proposal" | "execution" | "error";
 
 // Axe 2 — distinction info / proposition / exécution / erreur.
@@ -219,6 +262,16 @@ export default function MessageBubble({
   const isUser = message.sender === "user";
   const botType = !isUser ? resolveBotType(message) : null;
   const meta = botType ? BOT_TYPE_META[botType] : null;
+  const executionId = !isUser ? resolveExecutionId(message.extra, message.text) : null;
+  const looksLikeError = !isUser && botType === "error";
+  const shouldShowErrorAnalysis = !isUser && !!executionId && (looksLikeError || !!message.extra);
+
+  if (!isUser && looksLikeError && !executionId) {
+    console.debug(
+      "[AI Analysis] Message erreur sans executionId détectable",
+      { extra: message.extra, text: message.text },
+    );
+  }
 
   return (
     <Box
@@ -335,6 +388,13 @@ export default function MessageBubble({
             {message.text}
           </ReactMarkdown>
         </Paper>
+
+        {/* Afficher l'analyse IA si c'est une erreur d'exécution */}
+        {shouldShowErrorAnalysis && executionId && (
+          <Box sx={{ mt: 2, width: "100%" }}>
+            <ErrorAnalysisPanel executionId={executionId} />
+          </Box>
+        )}
       </Box>
     </Box>
   );

@@ -45,3 +45,6 @@ from .plan import Plan, PlanExecution, PlanPhase
 
 # OK Monitoring metrics storage
 from .metrics_snapshot import MetricsSnapshot
+
+# OK AI Analysis system
+from .ai_analysis import AIAnalysis

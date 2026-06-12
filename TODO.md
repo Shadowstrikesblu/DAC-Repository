@@ -1,0 +1,5 @@
+- [x] Mettre à jour `frontend/src/components/Chat/MessageBubble.tsx` pour détecter un executionId robuste (plusieurs clés backend)
+- [x] Ajuster la condition d’affichage de `ErrorAnalysisPanel` pour utiliser l’executionId résolu
+- [x] Ajouter un log de debug si message d’erreur sans executionId
+- [ ] Vérifier rapidement le frontend (build/lint) pour détecter d’éventuelles erreurs TypeScript
+- [x] Mettre à jour ce TODO avec l’avancement

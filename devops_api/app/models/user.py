@@ -20,6 +20,7 @@ class User(Base):
     
 
     execution_logs = relationship("ExecutionLog", back_populates="user")
+    ai_analyses = relationship("AIAnalysis", back_populates="user", cascade="all, delete-orphan")
     inventory_files = relationship("GeneratedInventoryFile", back_populates="user")
     aws_credentials = relationship("UserAWSCredentials", back_populates="user", uselist=False, cascade="all, delete-orphan")
     

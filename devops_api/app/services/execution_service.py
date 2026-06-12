@@ -5,6 +5,7 @@
 import os
 import json
 import logging
+import asyncio
 from datetime import datetime
 from typing import Optional, List, Dict, Any
 
@@ -25,6 +26,7 @@ from app.utils.crypto import decrypt  # encrypt non nécessaire ici désormais
 from app.utils.execution_progress import update_execution_progress
 from app.utils.extra_data_utils import get_extra, set_extra
 from app.services.execution_logger import log_execution_event
+from app.services import ai_error_analyzer
 
 logger = logging.getLogger(__name__)
 
@@ -411,6 +413,18 @@ async def run_execution(
                 )
             except Exception as log_err:
                 log.warning(f"[Execution] Erreur log failed: {log_err}")
+            
+            # Déclenche l'analyse IA de l'erreur (non-bloquante)
+            try:
+                asyncio.create_task(
+                    ai_error_analyzer.analyze_error_async(
+                        execution_id=execution_id,
+                        user_id=user_id,
+                        db=None,  # La fonction crée sa propre session
+                    )
+                )
+            except Exception as ai_err:
+                log.warning(f"[Execution] Could not trigger AI analysis: {ai_err}")
         
         # On expose un message contextualisé, le stack est déjà en fichier
         raise HTTPException(status_code=500, detail=f"Erreur exécution : {str(e)}")

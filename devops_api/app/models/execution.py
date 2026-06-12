@@ -60,3 +60,10 @@ class Execution(Base):
         back_populates="execution",
         cascade="all, delete-orphan",
     )
+
+    # AI Analysis
+    ai_analyses = relationship(
+        "AIAnalysis",
+        back_populates="execution",
+        cascade="all, delete-orphan",
+    )

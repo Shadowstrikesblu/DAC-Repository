@@ -67,6 +67,7 @@ from app.routes import generate_ansible
 from app.routes import generate_audit
 from app.routes import terraform_routes
 from app.routes import chat_resume_routes
+from app.routes import ai_routes
 
 
 # 
@@ -156,6 +157,8 @@ app.include_router(terraform_routes.router)
 #  Diagnostics
 app.include_router(diagnostics_routes.router, prefix="/diagnostics")
 
+#  AI Analysis
+app.include_router(ai_routes.router)
 
 #  User credentials
 app.include_router(user_credentials_router, prefix="/user")
